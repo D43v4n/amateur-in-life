@@ -1,0 +1,80 @@
+const express   = require('express');
+const router    = express.Router();
+const vt        = require('../services/virustotal');
+const threatfox = require('../services/threatfox');
+
+function detectHashType(h) {
+  if (/^[a-fA-F0-9]{32}$/.test(h))  return 'MD5';
+  if (/^[a-fA-F0-9]{40}$/.test(h))  return 'SHA-1';
+  if (/^[a-fA-F0-9]{64}$/.test(h))  return 'SHA-256';
+  return null;
+}
+
+router.post('/check', async (req, res) => {
+  const { hashes = [] } = req.body;
+  if (!Array.isArray(hashes) || !hashes.length)
+    return res.status(400).json({ error: 'Se requiere un array de hashes.' });
+  if (hashes.length > 20)
+    return res.status(400).json({ error: 'Máximo 20 hashes.' });
+  const invalid = hashes.filter(h => !detectHashType(h));
+  if (invalid.length)
+    return res.status(400).json({ error: `Hashes inválidos: ${invalid.join(', ')}` });
+
+  const results = await Promise.all(hashes.map(async (hash) => {
+    const hash_type = detectHashType(hash);
+    const [vtRes, tfRes] = await Promise.allSettled([
+      process.env.VIRUSTOTAL_API_KEY ? vt.checkHash(hash) : Promise.resolve(null),
+      threatfox.checkHash(hash),
+    ]);
+
+    const vtData = vtRes.status === 'fulfilled' ? vtRes.value : null;
+    const tfData = tfRes.status === 'fulfilled' ? tfRes.value : null;
+
+    // Si VT no lo conoce → unknown; si lo conoce → clean o malicious
+    const vtVerdict = vtData && !vtData.error
+      ? (vtData.total > 0 ? vtData.verdict : 'unknown') : null;
+    const tfVerdict = tfData && !tfData.error ? tfData.verdict : null;
+
+    const verdicts = [vtVerdict, tfVerdict].filter(Boolean);
+    const verdict =
+      verdicts.includes('malicious') ? 'malicious' :
+      verdicts.includes('suspect')   ? 'suspect'   :
+      verdicts.includes('clean')     ? 'clean'     : 'unknown';
+
+    const vtScore = vtData && !vtData.error && vtData.total
+      ? Math.round((vtData.malicious / vtData.total) * 100) : null;
+
+    const summary = {
+      score:             vtScore,
+      engines_malicious: vtData?.malicious ?? null,
+      engines_suspicious:vtData?.suspicious ?? null,
+      engines_total:     vtData?.total ?? null,
+      community_score:   vtData?.reputation ?? null,
+      file_name:         vtData?.name || null,
+      file_type:         vtData?.type || null,
+      file_size:         vtData?.size || null,
+      first_seen:        vtData?.firstSeen || null,
+      last_seen:         vtData?.lastSeen || null,
+      tags:              vtData?.tags || [],
+      threatfox_family:  tfData?.matches?.[0]?.malwareFamily || null,
+    };
+
+    const sources = [
+      vtData ? { source: 'VirusTotal', found: !vtData.error && vtData.total > 0,
+        verdict: vtVerdict,
+        link: `https://www.virustotal.com/gui/file/${hash}` } : null,
+      tfData ? { source: 'ThreatFox', found: (tfData.matches?.length > 0),
+        link: tfData.matches?.length ? `https://threatfox.abuse.ch/browse.php?search=ioc%3A${hash}` : null } : null,
+    ].filter(Boolean);
+
+    const errors = [vtData, tfData]
+      .filter(s => s?.error)
+      .map(s => ({ source: s.source, message: s.error }));
+
+    return { hash, hash_type, verdict, summary, sources, errors };
+  }));
+
+  res.json({ results });
+});
+
+module.exports = router;

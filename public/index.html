@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+<meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>EZWatch — OSINT Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0b0e14;--bg2:#111520;--bg3:#181e2d;--border:#1f2a40;--border2:#2a3a58;--text:#c8d8f0;--text2:#7a93b8;--text3:#3d5478;--accent:#3b82f6;--accent2:#60a5fa;--green:#22c55e;--yellow:#f59e0b;--red:#ef4444;--cyan:#06b6d4;--glow:rgba(59,130,246,0.15);--radius:10px;--font-mono:'JetBrains Mono',monospace;--font-sans:'Syne',sans-serif;--trans:all .2s ease}
+  [data-theme="light"]{--bg:#f0f4fb;--bg2:#ffffff;--bg3:#e4ecf7;--border:#c5d4ea;--border2:#a0b8d8;--text:#1a2740;--text2:#3d5478;--text3:#8aa5c8;--glow:rgba(59,130,246,0.08)}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}
+  body{font-family:var(--font-mono);background:var(--bg);color:var(--text);min-height:100vh;font-size:13px;line-height:1.6;transition:background .3s,color .3s}
+  ::selection{background:var(--accent);color:#fff}::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+  .shell{display:grid;grid-template-columns:220px 1fr;grid-template-rows:52px 1fr;min-height:100vh}
+  .topbar{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;padding:0 20px;background:var(--bg2);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
+  .logo{font-family:var(--font-sans);font-weight:800;font-size:17px;letter-spacing:-.5px;color:var(--accent2);display:flex;align-items:center;gap:8px}
+  .logo-dot{width:8px;height:8px;background:var(--accent);border-radius:50%;animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.8)}}
+  .topbar-right{display:flex;align-items:center;gap:14px}
+  .badge-live{font-size:10px;padding:2px 8px;border-radius:20px;background:rgba(34,197,94,.12);color:var(--green);border:1px solid rgba(34,197,94,.3);letter-spacing:.5px}
+  .theme-toggle{background:none;border:1px solid var(--border2);color:var(--text2);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px;font-family:var(--font-mono);transition:var(--trans)}
+  .theme-toggle:hover{border-color:var(--accent);color:var(--accent)}
+  .sidebar{background:var(--bg2);border-right:1px solid var(--border);padding:16px 0;position:sticky;top:52px;height:calc(100vh - 52px);overflow-y:auto}
+  .nav-section{padding:0 12px;margin-bottom:6px}.nav-label{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);padding:8px 8px 4px}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:7px;color:var(--text2);cursor:pointer;transition:var(--trans);margin-bottom:2px;border:1px solid transparent;font-size:12px}
+  .nav-item:hover{background:var(--bg3);color:var(--text)}.nav-item.active{background:var(--glow);color:var(--accent2);border-color:rgba(59,130,246,.25)}
+  .nav-item .ico{font-size:14px;flex-shrink:0}.sidebar-footer{position:absolute;bottom:0;left:0;right:0;padding:12px 20px;border-top:1px solid var(--border);font-size:10px;color:var(--text3)}
+  .main{padding:24px;display:flex;flex-direction:column;gap:20px;overflow-y:auto;max-width:1100px;width:100%}
+  .panel{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;display:none;animation:fadeIn .25s ease}.panel.active{display:block}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .panel-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);background:var(--bg3)}
+  .panel-title{font-family:var(--font-sans);font-weight:600;font-size:14px;display:flex;align-items:center;gap:8px}.panel-subtitle{font-size:11px;color:var(--text3);margin-top:2px}
+  .panel-body{padding:18px}
+  textarea,input[type=text],input[type=password]{width:100%;background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:var(--font-mono);font-size:12px;border-radius:7px;padding:10px 14px;resize:vertical;transition:var(--trans);outline:none}
+  textarea:focus,input[type=text]:focus,input[type=password]:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(59,130,246,.1)}textarea{min-height:80px}
+  .hint{font-size:10px;color:var(--text3);margin-top:5px}label{display:block;font-size:11px;color:var(--text2);margin-bottom:5px;letter-spacing:.3px}.input-row{display:flex;gap:10px;align-items:flex-start}
+  .btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:7px;border:none;font-family:var(--font-mono);font-size:12px;cursor:pointer;transition:var(--trans);white-space:nowrap;font-weight:500}
+  .btn-primary{background:var(--accent);color:#fff;box-shadow:0 0 20px rgba(59,130,246,.25)}.btn-primary:hover{background:var(--accent2);transform:translateY(-1px)}.btn-primary:active{transform:translateY(0)}
+  .btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2)}.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}.btn:disabled{opacity:.4;cursor:not-allowed;transform:none!important}
+  .results-wrap{margin-top:16px}table{width:100%;border-collapse:collapse;font-size:12px}
+  th{text-align:left;padding:8px 12px;font-size:10px;letter-spacing:.8px;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border)}
+  td{padding:10px 12px;border-bottom:1px solid rgba(31,42,64,.5);vertical-align:top}tr:last-child td{border-bottom:none}tr:hover td{background:var(--bg3)}
+  .cell-mono{font-family:var(--font-mono);color:var(--text)}.cell-dim{color:var(--text3);font-size:11px}
+  .verdict{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:20px;font-size:10px;font-weight:500;letter-spacing:.3px;white-space:nowrap}
+  .verdict-clean{background:rgba(34,197,94,.1);color:var(--green);border:1px solid rgba(34,197,94,.3)}
+  .verdict-suspect{background:rgba(245,158,11,.1);color:var(--yellow);border:1px solid rgba(245,158,11,.3)}
+  .verdict-malicious{background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.3)}
+  .verdict-unknown{background:rgba(122,147,184,.1);color:var(--text2);border:1px solid var(--border)}
+  .spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(59,130,246,.2);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}.loading-row{display:flex;align-items:center;gap:10px;color:var(--text2);font-size:12px;padding:16px 0}
+  .whois-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px}
+  .whois-card{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px}
+  .whois-card-title{font-family:var(--font-sans);font-size:13px;font-weight:600;margin-bottom:10px;color:var(--accent2);display:flex;align-items:center;gap:6px}
+  .whois-field{display:flex;flex-direction:column;gap:2px;margin-bottom:8px}.whois-field:last-child{margin-bottom:0}
+  .whois-key{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--text3)}.whois-val{font-size:12px;color:var(--text);word-break:break-all}
+  .score-wrap{margin:4px 0}.score-bar-bg{background:var(--bg3);border-radius:4px;height:5px;overflow:hidden;margin-top:4px}
+  .score-bar-fill{height:100%;border-radius:4px;transition:width .8s ease}.score-label{font-size:10px;display:flex;justify-content:space-between;color:var(--text3)}
+  .summary-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+  .summary-card{flex:1;min-width:120px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px 14px}
+  .summary-card .val{font-family:var(--font-sans);font-size:22px;font-weight:700}.summary-card .lbl{font-size:10px;color:var(--text3);letter-spacing:.5px;margin-top:2px}
+  .val-green{color:var(--green)}.val-red{color:var(--red)}.val-yellow{color:var(--yellow)}.val-blue{color:var(--accent2)}
+  .error-pill{display:inline-flex;align-items:center;gap:4px;font-size:10px;color:var(--yellow);background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);border-radius:4px;padding:1px 6px;margin-left:6px}
+  .tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:16px}
+  .tab{padding:7px 14px;font-size:11px;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;transition:var(--trans);margin-bottom:-1px}
+  .tab.active{color:var(--accent2);border-bottom-color:var(--accent)}.tab:hover:not(.active){color:var(--text2)}
+  .drop-zone{border:2px dashed var(--border2);border-radius:8px;padding:24px;text-align:center;cursor:pointer;transition:var(--trans);color:var(--text3);position:relative;overflow:hidden}
+  .drop-zone:hover,.drop-zone.dragover{border-color:var(--accent);color:var(--text2);background:rgba(59,130,246,.04)}
+  .drop-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}.drop-zone .drop-ico{font-size:24px;margin-bottom:6px}
+  .tag{display:inline-block;font-size:9px;padding:1px 6px;border-radius:3px;background:rgba(167,139,250,.1);color:#a78bfa;border:1px solid rgba(167,139,250,.2);margin:1px}
+  .tag-red{background:rgba(239,68,68,.1);color:var(--red);border-color:rgba(239,68,68,.2)}
+  @media(max-width:700px){.shell{grid-template-columns:1fr;grid-template-rows:52px auto 1fr}.sidebar{position:static;height:auto;display:flex;flex-wrap:wrap;padding:8px}.nav-section{display:flex;flex-wrap:wrap;gap:4px;padding:0}.nav-label{display:none}.nav-item{padding:6px 10px;font-size:11px}.sidebar-footer{display:none}.main{padding:14px}.input-row{flex-direction:column}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <header class="topbar">
+    <div class="logo"><div class="logo-dot"></div>EZWatch<span style="font-size:10px;color:var(--text3);font-weight:400;letter-spacing:.5px">OSINT</span></div>
+    <div class="topbar-right">
+      <span class="badge-live" id="server-status">⬤ Conectando…</span>
+      <button class="theme-toggle" onclick="toggleTheme()">☀ / ☾</button>
+    </div>
+  </header>
+  <nav class="sidebar">
+    <div class="nav-section">
+      <div class="nav-label">Análisis</div>
+      <div class="nav-item active" onclick="showPanel('domain')" id="nav-domain"><span class="ico">🌐</span> Dominios</div>
+      <div class="nav-item" onclick="showPanel('whois')"  id="nav-whois"> <span class="ico">🔎</span> WHOIS</div>
+      <div class="nav-item" onclick="showPanel('hash')"   id="nav-hash">  <span class="ico">🔐</span> Hashes</div>
+      <div class="nav-item" onclick="showPanel('ip')"     id="nav-ip">    <span class="ico">📡</span> Direcciones IP</div>
+    </div>
+    <div class="nav-section" style="margin-top:8px">
+      <div class="nav-label">Config</div>
+      <div class="nav-item" onclick="showPanel('config')" id="nav-config"><span class="ico">⚙️</span> API Keys</div>
+    </div>
+    <div class="sidebar-footer">EZWatch v1.0 · Blue Team<br><span style="color:var(--text3)">VT · Shodan · ThreatFox · WHOIS</span></div>
+  </nav>
+  <main class="main">
+
+    <!-- DOMAIN -->
+    <div class="panel active" id="panel-domain">
+      <div class="panel-header">
+        <div><div class="panel-title">🌐 Reputación de Dominios</div><div class="panel-subtitle">VirusTotal · Shodan · ThreatFox</div></div>
+        <button class="btn btn-ghost" onclick="clearPanel('domain')">Limpiar</button>
+      </div>
+      <div class="panel-body">
+        <label>Dominios (uno por línea o separados por coma)</label>
+        <textarea id="domain-input" placeholder="ejemplo.com&#10;malicious-site.net"></textarea>
+        <div class="hint">Máx. 20 dominios · Resultados de múltiples fuentes OSINT</div>
+        <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-primary" id="btn-domain" onclick="analyze('domain')">🔍 Analizar</button>
+          <button class="btn btn-ghost" onclick="loadSample('domain')">Cargar ejemplo</button>
+        </div>
+        <div id="domain-results" class="results-wrap"></div>
+      </div>
+    </div>
+
+    <!-- WHOIS -->
+    <div class="panel" id="panel-whois">
+      <div class="panel-header">
+        <div><div class="panel-title">🔎 Información WHOIS</div><div class="panel-subtitle">Datos de registro y DNS</div></div>
+        <button class="btn btn-ghost" onclick="clearPanel('whois')">Limpiar</button>
+      </div>
+      <div class="panel-body">
+        <label>Dominios (uno por línea)</label>
+        <div class="input-row">
+          <textarea id="whois-input" placeholder="ejemplo.com&#10;otro-dominio.org"></textarea>
+          <button class="btn btn-primary" id="btn-whois" onclick="analyze('whois')" style="flex-shrink:0">🔎 Consultar</button>
+        </div>
+        <div id="whois-results" class="results-wrap"></div>
+      </div>
+    </div>
+
+    <!-- HASH -->
+    <div class="panel" id="panel-hash">
+      <div class="panel-header">
+        <div><div class="panel-title">🔐 Verificación de Hashes</div><div class="panel-subtitle">SHA-256 · MD5 · SHA-1 — VirusTotal · ThreatFox</div></div>
+        <button class="btn btn-ghost" onclick="clearPanel('hash')">Limpiar</button>
+      </div>
+      <div class="panel-body">
+        <div class="tabs">
+          <div class="tab active" onclick="switchHashTab('paste')">Pegar hash</div>
+          <div class="tab" onclick="switchHashTab('file')">Calcular desde archivo</div>
+        </div>
+        <div id="hash-tab-paste">
+          <label>Hashes (uno por línea)</label>
+          <textarea id="hash-input" placeholder="e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"></textarea>
+        </div>
+        <div id="hash-tab-file" style="display:none">
+          <div class="drop-zone" id="dropZone">
+            <input type="file" id="file-input" onchange="computeHash(this)" multiple>
+            <div class="drop-ico">📂</div>
+            <div>Arrastra archivos o haz clic para seleccionar</div>
+            <div style="font-size:10px;margin-top:4px;color:var(--text3)">SHA-256 calculado localmente · nada se sube al servidor</div>
+          </div>
+          <div id="computed-hashes" style="margin-top:10px"></div>
+        </div>
+        <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-primary" id="btn-hash" onclick="analyze('hash')">🔍 Verificar</button>
+          <button class="btn btn-ghost" onclick="loadSample('hash')">Ejemplo</button>
+        </div>
+        <div id="hash-results" class="results-wrap"></div>
+      </div>
+    </div>
+
+    <!-- IP -->
+    <div class="panel" id="panel-ip">
+      <div class="panel-header">
+        <div><div class="panel-title">📡 Reputación de IPs</div><div class="panel-subtitle">VirusTotal · Shodan · ThreatFox</div></div>
+        <button class="btn btn-ghost" onclick="clearPanel('ip')">Limpiar</button>
+      </div>
+      <div class="panel-body">
+        <label>Direcciones IPv4 (una por línea)</label>
+        <textarea id="ip-input" placeholder="8.8.8.8&#10;185.220.101.1"></textarea>
+        <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-primary" id="btn-ip" onclick="analyze('ip')">🔍 Analizar</button>
+          <button class="btn btn-ghost" onclick="loadSample('ip')">Ejemplo</button>
+        </div>
+        <div id="ip-results" class="results-wrap"></div>
+      </div>
+    </div>
+
+    <!-- CONFIG -->
+    <div class="panel" id="panel-config">
+      <div class="panel-header"><div class="panel-title">⚙️ Configuración de API Keys</div></div>
+      <div class="panel-body">
+        <p style="font-size:12px;color:var(--text2);margin-bottom:16px">Las keys se configuran en el archivo <code style="color:var(--cyan)">.env</code> del servidor. Reinicia el servidor después de cambiarlas.</p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px">
+          <div class="whois-card"><div class="whois-card-title">🟢 VirusTotal</div><div class="whois-field"><div class="whois-key">Variable .env</div><div class="whois-val" style="color:var(--cyan)">VIRUSTOTAL_KEY</div></div><div class="whois-field"><div class="whois-key">Plan gratis</div><div class="whois-val">500 req/día · 4 req/min</div></div><div class="whois-field"><div class="whois-key">Obtener</div><div class="whois-val"><a href="https://www.virustotal.com/gui/join-us" target="_blank" style="color:var(--accent2)">virustotal.com</a></div></div></div>
+          <div class="whois-card"><div class="whois-card-title">🔵 Shodan</div><div class="whois-field"><div class="whois-key">Variable .env</div><div class="whois-val" style="color:var(--cyan)">SHODAN_KEY</div></div><div class="whois-field"><div class="whois-key">Plan gratis</div><div class="whois-val">100 resultados/mes</div></div><div class="whois-field"><div class="whois-key">Obtener</div><div class="whois-val"><a href="https://account.shodan.io/register" target="_blank" style="color:var(--accent2)">shodan.io</a></div></div></div>
+          <div class="whois-card"><div class="whois-card-title">🟡 ThreatFox</div><div class="whois-field"><div class="whois-key">Variable .env</div><div class="whois-val" style="color:var(--green)">THREATFOX_API_KEY</div></div><div class="whois-field"><div class="whois-key">Auth-Key</div><input type="password" id="key-threatfox" placeholder="Pegar Auth-Key..." style="font-size:11px;padding:6px 10px;margin-top:2px;width:100%"></div><div class="whois-field"><div class="whois-key">Sin key</div><div class="whois-val" style="color:var(--text3)">Funciona con rate limit reducido</div></div></div>
+          <div class="whois-card"><div class="whois-card-title">⚪ WHOIS</div><div class="whois-field"><div class="whois-key">Variable .env</div><div class="whois-val" style="color:var(--green)">No requerida</div></div><div class="whois-field"><div class="whois-key">Acceso</div><div class="whois-val" style="color:var(--green)">Público (whoisjson.com)</div></div></div>
+        </div>
+        <div style="margin-top:16px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px;font-size:12px">
+          <div style="color:var(--accent2);margin-bottom:8px;font-weight:600">📋 Inicio rápido</div>
+          <div style="color:var(--text2);line-height:2.2">
+            1. <code style="color:var(--cyan)">cp .env.example .env</code> y pega tus keys<br>
+            2. <code style="color:var(--cyan)">npm install</code><br>
+            3. <code style="color:var(--cyan)">npm run dev</code><br>
+            4. Abre <code style="color:var(--cyan)">http://localhost:3000</code>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+<script>
+const SAMPLES={domain:'google.com\nmalware-test.com\npaypal-secure-login.com',hash:'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\nd41d8cd98f00b204e9800998ecf8427e',ip:'8.8.8.8\n1.1.1.1\n185.220.101.1'};
+
+function showPanel(id){document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));document.getElementById('panel-'+id)?.classList.add('active');document.getElementById('nav-'+id)?.classList.add('active')}
+function toggleTheme(){const h=document.documentElement;h.setAttribute('data-theme',h.getAttribute('data-theme')==='dark'?'light':'dark');localStorage.setItem('bw-theme',h.getAttribute('data-theme'))}
+(function(){const s=localStorage.getItem('bw-theme');if(s)document.documentElement.setAttribute('data-theme',s)})();
+async function checkServer(){const el=document.getElementById('server-status');try{const r=await fetch('/api/domain',{method:'POST',headers:{'Content-Type':'application/json'},body:'{"domains":[]}',signal:AbortSignal.timeout(3000)});el.textContent='⬤ En línea';el.style.color='var(--green)'}catch{el.textContent='⬤ Sin servidor';el.style.color='var(--red)'}}
+checkServer();
+function switchHashTab(tab){document.querySelectorAll('.tabs .tab').forEach((t,i)=>t.classList.toggle('active',(i===0&&tab==='paste')||(i===1&&tab==='file')));document.getElementById('hash-tab-paste').style.display=tab==='paste'?'':'none';document.getElementById('hash-tab-file').style.display=tab==='file'?'':'none'}
+const dz=document.getElementById('dropZone');if(dz){['dragenter','dragover'].forEach(e=>dz.addEventListener(e,ev=>{ev.preventDefault();dz.classList.add('dragover')}));['dragleave','drop'].forEach(e=>dz.addEventListener(e,ev=>{ev.preventDefault();dz.classList.remove('dragover')}));dz.addEventListener('drop',ev=>computeHash({files:ev.dataTransfer.files}))}
+async function computeHash(input){const files=input.files||input;const container=document.getElementById('computed-hashes');container.innerHTML='';for(const file of files){const buf=await file.arrayBuffer();const digest=await crypto.subtle.digest('SHA-256',buf);const hex=Array.from(new Uint8Array(digest)).map(b=>b.toString(16).padStart(2,'0')).join('');const row=document.createElement('div');row.style.cssText='display:flex;align-items:center;gap:8px;margin-top:6px;font-size:11px;flex-wrap:wrap';row.innerHTML=`<span style="color:var(--text3)">📄 ${file.name}</span><span style="font-size:10px;color:var(--cyan);word-break:break-all">${hex}</span><button class="btn btn-ghost" style="padding:3px 8px;font-size:10px" onclick="addHash('${hex}')">+ Agregar</button>`;container.appendChild(row)}}
+function addHash(hash){const ta=document.getElementById('hash-input');ta.value=(ta.value?ta.value+'\n':'')+hash;switchHashTab('paste')}
+function loadSample(type){const ta=document.getElementById(type+'-input');if(ta)ta.value=SAMPLES[type]}
+function clearPanel(type){const r=document.getElementById(type+'-results');if(r)r.innerHTML='';const ta=document.getElementById(type+'-input');if(ta)ta.value=''}
+function parseInput(raw){return raw.split(/[\n,]+/).map(s=>s.trim()).filter(Boolean)}
+function verdictBadge(v){const m={clean:['verdict-clean','✔ Limpio'],suspect:['verdict-suspect','⚠ Sospechoso'],malicious:['verdict-malicious','✖ Malicioso'],unknown:['verdict-unknown','? Desconocido']};const[cls,label]=m[v]||m.unknown;return`<span class="verdict ${cls}">${label}</span>`}
+function scoreBar(pct,color){return`<div class="score-wrap"><div class="score-label"><span>Score</span><span>${pct}%</span></div><div class="score-bar-bg"><div class="score-bar-fill" style="width:${pct}%;background:${color}"></div></div></div>`}
+function field(k,v){return v&&v!=='—'?`<div class="whois-field"><div class="whois-key">${k}</div><div class="whois-val">${v}</div></div>`:''}
+function communityScore(score){
+  if(score==null)return'<span class="cell-dim">—</span>';
+  const color=score<0?'var(--red)':score>0?'var(--green)':'var(--text3)';
+  const sign=score>0?'+':'';
+  const label=score<-25?'Malicioso':score<0?'Sospechoso':score===0?'Neutro':score<25?'Benigno':'Confiable';
+  return`<div style="display:flex;align-items:center;gap:6px">
+    <span style="font-family:var(--font-sans);font-size:16px;font-weight:700;color:${color}">${sign}${score}</span>
+    <span style="font-size:10px;color:${color};opacity:.8">${label}</span>
+  </div>`;
+}
+
+async function analyze(type){
+  const raw=document.getElementById(type+'-input')?.value||'';
+  const items=parseInput(raw);
+  if(!items.length){alert('Ingresa al menos un elemento.');return}
+  const btn=document.getElementById('btn-'+type);
+  const container=document.getElementById(type+'-results');
+  btn.disabled=true;btn.innerHTML='<div class="spinner"></div> Analizando…';
+  container.innerHTML='<div class="loading-row"><div class="spinner"></div> Consultando fuentes OSINT…</div>';
+  const bodyKey={domain:'domains',whois:'domains',hash:'hashes',ip:'ips'}[type];
+  try{
+    const endpointMap={domain:'/api/domain/check',whois:'/api/whois/lookup',hash:'/api/hash/check',ip:'/api/ip/check'};
+    const res=await fetch(endpointMap[type],{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({[bodyKey]:items})});
+    const data=await res.json();
+    if(!res.ok)throw new Error(data.error||'Error '+res.status);
+    if(type==='domain')renderDomain(data.results,container);
+    if(type==='whois') renderWhois(data.results,container);
+    if(type==='hash')  renderHash(data.results,container);
+    if(type==='ip')    renderIP(data.results,container);
+  }catch(err){
+    container.innerHTML=`<div style="padding:16px;color:var(--red);font-size:12px">❌ Error: ${err.message}<br><span style="color:var(--text3);font-size:11px">¿El servidor está corriendo? Verifica que npm run dev esté activo.</span></div>`;
+  }finally{
+    btn.disabled=false;btn.innerHTML=type==='whois'?'🔎 Consultar':'🔍 '+(type==='hash'?'Verificar':'Analizar');
+  }
+}
+
+function renderDomain(results,container){
+  const mal=results.filter(r=>r.verdict==='malicious').length,sus=results.filter(r=>r.verdict==='suspect').length,cln=results.filter(r=>r.verdict==='clean').length;
+  let html=`<div class="summary-row"><div class="summary-card"><div class="val val-red">${mal}</div><div class="lbl">MALICIOSOS</div></div><div class="summary-card"><div class="val val-yellow">${sus}</div><div class="lbl">SOSPECHOSOS</div></div><div class="summary-card"><div class="val val-green">${cln}</div><div class="lbl">LIMPIOS</div></div><div class="summary-card"><div class="val val-blue">${results.length}</div><div class="lbl">TOTAL</div></div></div>
+  <table><thead><tr><th>Dominio</th><th>Veredicto</th><th>Motores VT</th><th>Community Score</th><th>País / Org</th><th>Puertos / CVEs</th><th>Links</th></tr></thead><tbody>`;
+  for(const r of results){const s=r.summary;
+    const vtScore=s.score!=null?scoreBar(s.score,s.score>50?'var(--red)':s.score>10?'var(--yellow)':'var(--green)'):'<span class="cell-dim">—</span>';
+    const vtCount=s.engines_malicious!=null?`<span style="font-size:10px;color:var(--text3)">${s.engines_malicious}/${s.engines_total}</span>`:'';
+    const ports=s.ports?.length?s.ports.slice(0,8).map(p=>`<span class="tag">${p}</span>`).join(''):'<span class="cell-dim">—</span>';
+    const vulns=s.vulns?.length?s.vulns.slice(0,3).map(v=>`<span class="tag tag-red">${v}</span>`).join(''):'';
+    const vtLink=r.sources?.find(x=>x.source==='VirusTotal')?.link;
+    const shLink=r.sources?.find(x=>x.source==='Shodan'&&x.found)?.link;
+    const tfLink=r.sources?.find(x=>x.source==='ThreatFox'&&x.found)?.link;
+    const errBadge=r.errors?.length?`<span class="error-pill">⚠ ${r.errors.map(e=>e.source).join(',')}</span>`:'';
+    html+=`<tr><td class="cell-mono">${r.domain}${errBadge}</td><td>${verdictBadge(r.verdict)}${s.threatfox_family?`<div style="font-size:10px;color:var(--red);margin-top:3px">🦠 ${s.threatfox_family}</div>`:''}</td><td>${vtScore}${vtCount}</td><td>${communityScore(s.community_score)}</td><td class="cell-dim">${s.country||'—'}<br>${s.org||'—'}</td><td>${ports}${vulns}</td><td style="white-space:nowrap">${vtLink?`<a href="${vtLink}" target="_blank" style="color:var(--accent2);font-size:10px">VT</a>`:''}${shLink?` <a href="${shLink}" target="_blank" style="color:var(--cyan);font-size:10px">Shodan</a>`:''}${tfLink?` <a href="${tfLink}" target="_blank" style="color:var(--red);font-size:10px">TFox</a>`:''}</td></tr>`;
+  }
+  html+='</tbody></table>';container.innerHTML=html;
+}
+
+function renderWhois(results,container){
+  let html='<div class="whois-grid">';
+  for(const w of results){
+    if(w.error){html+=`<div class="whois-card"><div class="whois-card-title">🌐 ${w.domain}</div><div style="color:var(--red);font-size:12px">${w.error}</div></div>`;continue}
+    html+=`<div class="whois-card"><div class="whois-card-title">🌐 ${w.domain}</div>${field('Registrar',w.registrar)}${field('Creación',w.created)}${field('Expiración',w.expires)}${field('Actualizado',w.updated)}${field('Nameservers',w.nameservers)}${field('Estado',w.status)}${field('Registrante',w.registrant_name)}${field('Organización',w.registrant_org)}${field('País',w.registrant_country)}${field('DNSSEC',w.dnssec)}</div>`;
+  }
+  html+='</div>';container.innerHTML=html;
+}
+
+function renderHash(results,container){
+  const mal=results.filter(r=>r.verdict==='malicious').length,cln=results.filter(r=>r.verdict==='clean').length,unk=results.filter(r=>r.verdict==='unknown').length;
+  let html=`<div class="summary-row"><div class="summary-card"><div class="val val-red">${mal}</div><div class="lbl">MALICIOSOS</div></div><div class="summary-card"><div class="val val-green">${cln}</div><div class="lbl">LIMPIOS</div></div><div class="summary-card"><div class="val val-yellow">${unk}</div><div class="lbl">NO ENCONTRADOS</div></div><div class="summary-card"><div class="val val-blue">${results.length}</div><div class="lbl">TOTAL</div></div></div>
+  <table><thead><tr><th>Hash</th><th>Tipo</th><th>Veredicto</th><th>Motores AV</th><th>Community Score</th><th>Archivo</th><th>Links</th></tr></thead><tbody>`;
+  for(const r of results){const s=r.summary;
+    const shortHash=r.hash.slice(0,14)+'…'+r.hash.slice(-6);
+    const score=s.score!=null?scoreBar(s.score,s.score>50?'var(--red)':s.score>10?'var(--yellow)':'var(--green)'):'<span class="cell-dim">No encontrado en VT</span>';
+    const vtCount=s.engines_malicious!=null?`<span style="font-size:10px;color:var(--text3)">${s.engines_malicious}/${s.engines_total}</span>`:'';
+    const vtLink=r.sources?.find(x=>x.source==='VirusTotal')?.link;
+    const tfLink=r.sources?.find(x=>x.source==='ThreatFox'&&x.found)?.link;
+    html+=`<tr><td class="cell-mono" title="${r.hash}" style="color:var(--cyan);font-size:11px">${shortHash}</td><td class="cell-dim">${r.hash_type}</td><td>${verdictBadge(r.verdict)}${s.threatfox_family?`<div style="font-size:10px;color:var(--red);margin-top:3px">🦠 ${s.threatfox_family}</div>`:''}</td><td>${score}${vtCount}</td><td>${communityScore(s.community_score)}</td><td class="cell-dim">${s.file_name||'—'}<br>${s.file_type||''} ${s.file_size?`(${(s.file_size/1024).toFixed(1)}KB)`:''}<br>${s.first_seen?'Visto: '+s.first_seen:''}</td><td style="white-space:nowrap">${vtLink?`<a href="${vtLink}" target="_blank" style="color:var(--accent2);font-size:10px">VT</a>`:''}${tfLink?` <a href="${tfLink}" target="_blank" style="color:var(--red);font-size:10px">TFox</a>`:''}</td></tr>`;
+  }
+  html+='</tbody></table>';container.innerHTML=html;
+}
+
+function renderIP(results,container){
+  const mal=results.filter(r=>r.verdict==='malicious').length,sus=results.filter(r=>r.verdict==='suspect').length,cln=results.filter(r=>r.verdict==='clean').length;
+  let html=`<div class="summary-row"><div class="summary-card"><div class="val val-red">${mal}</div><div class="lbl">MALICIOSAS</div></div><div class="summary-card"><div class="val val-yellow">${sus}</div><div class="lbl">SOSPECHOSAS</div></div><div class="summary-card"><div class="val val-green">${cln}</div><div class="lbl">LIMPIAS</div></div><div class="summary-card"><div class="val val-blue">${results.length}</div><div class="lbl">TOTAL</div></div></div>
+  <table><thead><tr><th>IP</th><th>Veredicto</th><th>Motores VT</th><th>Community Score</th><th>País / Org / ASN</th><th>Puertos</th><th>CVEs</th><th>Links</th></tr></thead><tbody>`;
+  for(const r of results){const s=r.summary;
+    const score=s.score!=null?scoreBar(s.score,s.score>50?'var(--red)':s.score>10?'var(--yellow)':'var(--green)'):'<span class="cell-dim">—</span>';
+    const ports=s.ports?.length?s.ports.slice(0,8).map(p=>`<span class="tag">${p}</span>`).join(''):'—';
+    const vulns=s.vulns?.length?s.vulns.slice(0,3).map(v=>`<span class="tag tag-red">${v}</span>`).join(''):'—';
+    const tags=s.tags?.length?s.tags.map(t=>`<span class="tag">${t}</span>`).join(''):'';
+    const vtLink=r.sources?.find(x=>x.source==='VirusTotal')?.link;
+    const shLink=r.sources?.find(x=>x.source==='Shodan'&&x.found)?.link;
+    const tfLink=r.sources?.find(x=>x.source==='ThreatFox'&&x.found)?.link;
+    const errBadge=r.errors?.length?`<span class="error-pill">⚠ ${r.errors.map(e=>e.source).join(',')}</span>`:'';
+    html+=`<tr><td class="cell-mono">${r.ip}${errBadge}${tags?`<div style="margin-top:3px">${tags}</div>`:''}</td><td>${verdictBadge(r.verdict)}${s.threatfox_family?`<div style="font-size:10px;color:var(--red);margin-top:3px">🦠 ${s.threatfox_family}</div>`:''}</td><td>${score}</td><td>${communityScore(s.community_score)}</td><td class="cell-dim">${s.country||'—'}<br>${s.isp||s.org||'—'}<br><span style="color:var(--text3)">${s.asn||''}</span></td><td>${ports}</td><td>${vulns}</td><td style="white-space:nowrap">${vtLink?`<a href="${vtLink}" target="_blank" style="color:var(--accent2);font-size:10px">VT</a>`:''}${shLink?` <a href="${shLink}" target="_blank" style="color:var(--cyan);font-size:10px">Shodan</a>`:''}${tfLink?` <a href="${tfLink}" target="_blank" style="color:var(--red);font-size:10px">TFox</a>`:''}</td></tr>`;
+  }
+  html+='</tbody></table>';container.innerHTML=html;
+}
+</script>
+</body>
+</html>
