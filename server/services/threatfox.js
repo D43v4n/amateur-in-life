@@ -4,10 +4,8 @@ const axios = require('axios');
 const BASE = 'https://threatfox-api.abuse.ch/api/v1/';
 
 function headers() {
-  const key = process.env.THREATFOX_API_KEY;
-  // Auth-Key header desbloquea rate limits más altos y endpoints premium
-  return key
-    ? { 'Content-Type': 'application/json', 'Auth-Key': key }
+   return process.env.THREATFOX_API_KEY
+    ? { 'Content-Type': 'application/json', 'Auth-Key': process.env.THREATFOX_API_KEY }
     : { 'Content-Type': 'application/json' };
 }
 

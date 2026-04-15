@@ -3,6 +3,42 @@ const router    = express.Router();
 const vt        = require('../services/virustotal');
 const threatfox = require('../services/threatfox');
 
+// ── Veredicto consolidado para hashes ─────────────────────────
+// VT primario. Hash no visto por VT (total=0) → unknown, no clean.
+// ThreatFox es autoritativo: un IOC de hash con alta confianza
+// es evidencia directa de archivo malicioso.
+function consolidateVerdict(vtData, tfData) {
+  const hasVT = vtData && !vtData.error;
+  const hasTF = tfData && !tfData.error;
+
+  if (!hasVT && !hasTF) return 'unknown';
+
+  // ── 1. VT primario ─────────────────────────────────────────
+  let verdict = 'unknown';
+  if (hasVT) {
+    if (!vtData.total) {
+      verdict = 'unknown'; // hash nunca enviado a VT
+    } else {
+      const mal = vtData.malicious || 0;
+      const sus = vtData.suspicious || 0;
+      if      (mal >= 3) verdict = 'malicious';
+      else if (mal >= 1) verdict = 'suspect';
+      else if (sus >= 3) verdict = 'suspect';
+      else               verdict = 'clean';
+    }
+  }
+
+  // ── 2. ThreatFox escala (incluso desde unknown) ───────────
+  // Un hash IOC con confianza alta es evidencia directa
+  if (hasTF && tfData.matches?.length > 0) {
+    const maxConf = Math.max(...tfData.matches.map(m => m.confidence || 0), 0);
+    if      (maxConf >= 75) verdict = 'malicious';
+    else if (maxConf >  0 && verdict !== 'malicious') verdict = 'suspect';
+  }
+
+  return verdict;
+}
+
 function detectHashType(h) {
   if (/^[a-fA-F0-9]{32}$/.test(h))  return 'MD5';
   if (/^[a-fA-F0-9]{40}$/.test(h))  return 'SHA-1';
@@ -30,16 +66,7 @@ router.post('/check', async (req, res) => {
     const vtData = vtRes.status === 'fulfilled' ? vtRes.value : null;
     const tfData = tfRes.status === 'fulfilled' ? tfRes.value : null;
 
-    // Si VT no lo conoce → unknown; si lo conoce → clean o malicious
-    const vtVerdict = vtData && !vtData.error
-      ? (vtData.total > 0 ? vtData.verdict : 'unknown') : null;
-    const tfVerdict = tfData && !tfData.error ? tfData.verdict : null;
-
-    const verdicts = [vtVerdict, tfVerdict].filter(Boolean);
-    const verdict =
-      verdicts.includes('malicious') ? 'malicious' :
-      verdicts.includes('suspect')   ? 'suspect'   :
-      verdicts.includes('clean')     ? 'clean'     : 'unknown';
+    const verdict = consolidateVerdict(vtData, tfData);
 
     const vtScore = vtData && !vtData.error && vtData.total
       ? Math.round((vtData.malicious / vtData.total) * 100) : null;
@@ -61,17 +88,17 @@ router.post('/check', async (req, res) => {
 
     const sources = [
       vtData ? { source: 'VirusTotal', found: !vtData.error && vtData.total > 0,
-        verdict: vtVerdict,
+        verdict: vtData?.verdict || null,
         link: `https://www.virustotal.com/gui/file/${hash}` } : null,
-      tfData ? { source: 'ThreatFox', found: (tfData.matches?.length > 0),
-        link: tfData.matches?.length ? `https://threatfox.abuse.ch/browse.php?search=ioc%3A${hash}` : null } : null,
+      tfData ? { source: 'ThreatFox', found: (tfData.matches?.length > 0), verdict: tfData.verdict,
+        link: `https://threatfox.abuse.ch/browse.php?search=ioc%3A${hash}` } : null,
     ].filter(Boolean);
 
     const errors = [vtData, tfData]
       .filter(s => s?.error)
       .map(s => ({ source: s.source, message: s.error }));
 
-    return { hash, hash_type, verdict, summary, sources, errors };
+    return { hash, hash_type, verdict, summary, engines_detail: vtData?.engines_detail || null, sources, errors };
   }));
 
   res.json({ results });

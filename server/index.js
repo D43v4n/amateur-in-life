@@ -38,7 +38,6 @@ app.get('/api/status', (req, res) => {
       virustotal: !!process.env.VIRUSTOTAL_API_KEY,
       shodan:     !!process.env.SHODAN_API_KEY,
       abuseipdb:  !!process.env.ABUSEIPDB_API_KEY,
-      greynoise:  !!process.env.GREYNOISE_API_KEY,
       threatfox:  true,
     }
   });

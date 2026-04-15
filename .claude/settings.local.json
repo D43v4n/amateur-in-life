@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pkill -f \"node server/index.js\")",
+      "Bash(node server/index.js)",
+      "Bash(node -e ':*)",
+      "Bash(curl -sk -X POST https://threatfox-api.abuse.ch/api/v1/ -H 'Content-Type: application/json' -d '{\"query\":\"search_ioc\",\"search_term\":\"mptom.info\"}' -w '\\\\nHTTP_STATUS:%{http_code}')",
+      "Bash(curl -sk 'https://api.shodan.io/shodan/host/104.21.90.152?key=Zy9zJiuqzjUx7LGBnGcLdWplbGslZ4We' -w '\\\\nHTTP_STATUS:%{http_code}')",
+      "Bash(python -c \"import sys,json; d=sys.stdin.read\\(\\); parts=d.rsplit\\('\\\\n',1\\); print\\(parts[-1]\\); print\\(json.loads\\(parts[0]\\).get\\('error', 'OK - campos: '+str\\(list\\(json.loads\\(parts[0]\\).keys\\(\\)\\)[:5]\\)\\)\\)\")",
+      "Bash(curl -s -X POST http://localhost:3000/api/domain/check -H 'Content-Type: application/json' -d '{\"domains\":[\"mptom.info\"]}')",
+      "Bash(python -c ':*)"
+    ]
+  }
+}

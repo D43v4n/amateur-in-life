@@ -1,7 +1,9 @@
 // services/shodan.js
 const axios = require('axios');
+const https  = require('https');
 
-const BASE = 'https://api.shodan.io';
+const BASE  = 'https://api.shodan.io';
+const agent = new https.Agent({ rejectUnauthorized: false });
 
 function key() {
   return process.env.SHODAN_API_KEY;
@@ -12,7 +14,7 @@ async function checkIP(ip) {
   try {
     const { data } = await axios.get(
       `${BASE}/shodan/host/${encodeURIComponent(ip)}`,
-      { params: { key: key() } }
+      { params: { key: key() }, httpsAgent: agent }
     );
 
     const ports    = data.ports || [];
@@ -58,7 +60,7 @@ async function checkDomain(domain) {
   try {
     const { data } = await axios.get(
       `${BASE}/dns/resolve`,
-      { params: { hostnames: domain, key: key() } }
+      { params: { hostnames: domain, key: key() }, httpsAgent: agent }
     );
     const ip = data[domain];
     if (!ip) return { source: 'Shodan', domain, error: 'No se pudo resolver el dominio' };

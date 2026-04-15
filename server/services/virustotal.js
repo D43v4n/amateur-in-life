@@ -18,6 +18,21 @@ function parseStats(stats = {}) {
   return { malicious, suspicious, harmless, undetected, total, verdict };
 }
 
+// ── Agrupa engines por categoría ──────────────────────────
+function parseEngines(analysisResults = {}) {
+  const groups = { malicious: [], suspicious: [], harmless: [], undetected: [] };
+  for (const [engine, info] of Object.entries(analysisResults)) {
+    const cat = info.category;
+    if (groups[cat]) {
+      groups[cat].push({ engine, result: info.result });
+    }
+  }
+  for (const cat of Object.keys(groups)) {
+    groups[cat].sort((a, b) => a.engine.localeCompare(b.engine));
+  }
+  return groups;
+}
+
 // ── Dominio ───────────────────────────────────────────────
 async function checkDomain(domain) {
   try {
@@ -28,17 +43,18 @@ async function checkDomain(domain) {
     const attr  = data.data.attributes;
     const stats = parseStats(attr.last_analysis_stats);
     return {
-      source:     'VirusTotal',
+      source:         'VirusTotal',
       domain,
-      verdict:    stats.verdict,
-      malicious:  stats.malicious,
-      suspicious: stats.suspicious,
-      total:      stats.total,
-      categories: attr.categories || {},
-      reputation: attr.reputation || 0,
-      lastSeen:   attr.last_analysis_date
+      verdict:        stats.verdict,
+      malicious:      stats.malicious,
+      suspicious:     stats.suspicious,
+      total:          stats.total,
+      categories:     attr.categories || {},
+      reputation:     attr.reputation || 0,
+      lastSeen:       attr.last_analysis_date
         ? new Date(attr.last_analysis_date * 1000).toISOString().split('T')[0]
         : null,
+      engines_detail: parseEngines(attr.last_analysis_results),
     };
   } catch (err) {
     return { source: 'VirusTotal', domain, error: err.response?.data?.error?.message || err.message };
@@ -55,16 +71,17 @@ async function checkIP(ip) {
     const attr  = data.data.attributes;
     const stats = parseStats(attr.last_analysis_stats);
     return {
-      source:     'VirusTotal',
+      source:         'VirusTotal',
       ip,
-      verdict:    stats.verdict,
-      malicious:  stats.malicious,
-      suspicious: stats.suspicious,
-      total:      stats.total,
-      country:    attr.country || '—',
-      asn:        attr.asn || '—',
-      asOwner:    attr.as_owner || '—',
-      reputation: attr.reputation || 0,
+      verdict:        stats.verdict,
+      malicious:      stats.malicious,
+      suspicious:     stats.suspicious,
+      total:          stats.total,
+      country:        attr.country || '—',
+      asn:            attr.asn || '—',
+      asOwner:        attr.as_owner || '—',
+      reputation:     attr.reputation || 0,
+      engines_detail: parseEngines(attr.last_analysis_results),
     };
   } catch (err) {
     return { source: 'VirusTotal', ip, error: err.response?.data?.error?.message || err.message };
@@ -81,25 +98,26 @@ async function checkHash(hash) {
     const attr  = data.data.attributes;
     const stats = parseStats(attr.last_analysis_stats);
     return {
-      source:      'VirusTotal',
+      source:         'VirusTotal',
       hash,
-      verdict:     stats.verdict,
-      malicious:   stats.malicious,
-      suspicious:  stats.suspicious,
-      total:       stats.total,
-      name:        attr.meaningful_name || attr.names?.[0] || '—',
-      type:        attr.type_description || '—',
-      size:        attr.size || 0,
-      sha256:      attr.sha256,
-      md5:         attr.md5,
-      sha1:        attr.sha1,
-      firstSeen:   attr.first_submission_date
+      verdict:        stats.verdict,
+      malicious:      stats.malicious,
+      suspicious:     stats.suspicious,
+      total:          stats.total,
+      name:           attr.meaningful_name || attr.names?.[0] || '—',
+      type:           attr.type_description || '—',
+      size:           attr.size || 0,
+      sha256:         attr.sha256,
+      md5:            attr.md5,
+      sha1:           attr.sha1,
+      firstSeen:      attr.first_submission_date
         ? new Date(attr.first_submission_date * 1000).toISOString().split('T')[0]
         : null,
-      lastSeen:    attr.last_analysis_date
+      lastSeen:       attr.last_analysis_date
         ? new Date(attr.last_analysis_date * 1000).toISOString().split('T')[0]
         : null,
-      tags:        attr.tags || [],
+      tags:           attr.tags || [],
+      engines_detail: parseEngines(attr.last_analysis_results),
     };
   } catch (err) {
     return { source: 'VirusTotal', hash, error: err.response?.data?.error?.message || err.message };
