@@ -1,4 +1,4 @@
-# 🔵 BlueWatch OSINT
+# 🔵 EZWatch OSINT
 
 Plataforma de inteligencia para Blue Team. Verifica reputación de dominios, IPs, hashes y datos WHOIS consultando múltiples fuentes OSINT en paralelo.
 
