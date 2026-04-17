@@ -1,6 +1,37 @@
 // services/whois.js
 // Usa RDAP bootstrap de IANA — estándar oficial, sin dependencias externas
 const axios = require('axios');
+const https = require('https');
+const dns   = require('dns').promises;
+
+const agent = new https.Agent({ rejectUnauthorized: false });
+
+async function resolveIP(domain) {
+  try {
+    const addrs = await dns.resolve4(domain);
+    return addrs[0] || null;
+  } catch { return null; }
+}
+
+async function getIPLocation(ip) {
+  try {
+    const { data } = await axios.get(`https://ipwho.is/${ip}`, { httpsAgent: agent, timeout: 5000 });
+    if (!data.success) return null;
+    return {
+      ip,
+      country:      data.country      || null,
+      country_code: data.country_code || null,
+      region:       data.region       || null,
+      city:         data.city         || null,
+      lat:          data.latitude     || null,
+      lon:          data.longitude    || null,
+      timezone:     data.timezone?.id || null,
+      isp:          data.connection?.isp || null,
+      org:          data.connection?.org || null,
+      asn:          data.connection?.asn ? `AS${data.connection.asn}` : null,
+    };
+  } catch { return null; }
+}
 
 // IANA RDAP bootstrap: nos dice qué servidor RDAP usar para cada TLD
 async function getRdapServer(tld) {
@@ -81,17 +112,18 @@ async function queryWhoisJson(domain) {
 }
 
 async function lookup(domain) {
-  // Intenta RDAP primero, luego whoisjsonapi como fallback
+  const ip = await resolveIP(domain);
+  const ip_location = ip ? await getIPLocation(ip) : null;
+
   try {
-    return await queryRdap(domain);
+    const whoisData = await queryRdap(domain);
+    return { ...whoisData, ip_location };
   } catch (err1) {
     try {
-      return await queryWhoisJson(domain);
+      const whoisData = await queryWhoisJson(domain);
+      return { ...whoisData, ip_location };
     } catch (err2) {
-      return {
-        domain,
-        error: `No se pudo obtener WHOIS: ${err1.message}`,
-      };
+      return { domain, error: `No se pudo obtener WHOIS: ${err1.message}`, ip_location };
     }
   }
 }

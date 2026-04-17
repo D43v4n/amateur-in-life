@@ -348,8 +348,23 @@ function renderDomain(results,container){
 function renderWhois(results,container){
   let html='<div class="whois-grid">';
   for(const w of results){
-    if(w.error){html+=`<div class="whois-card"><div class="whois-card-title">🌐 ${w.domain}</div><div style="color:var(--red);font-size:12px">${w.error}</div></div>`;continue}
-    html+=`<div class="whois-card"><div class="whois-card-title">🌐 ${w.domain}</div>${field('Registrar',w.registrar)}${field('Creación',w.created)}${field('Expiración',w.expires)}${field('Actualizado',w.updated)}${field('Nameservers',w.nameservers)}${field('Estado',w.status)}${field('Registrante',w.registrant_name)}${field('Organización',w.registrant_org)}${field('País',w.registrant_country)}${field('DNSSEC',w.dnssec)}</div>`;
+    if(w.error&&!w.ip_location){html+=`<div class="whois-card"><div class="whois-card-title">🌐 ${w.domain}</div><div style="color:var(--red);font-size:12px">${w.error}</div></div>`;continue}
+    let ipSection='';
+    if(w.ip_location){
+      const g=w.ip_location;
+      const loc=[g.city,g.region,g.country].filter(Boolean).join(', ')||'—';
+      const mapUrl=g.lat&&g.lon?`https://www.openstreetmap.org/?mlat=${g.lat}&mlon=${g.lon}&zoom=10`:'';
+      ipSection=`<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+        <div style="font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--accent2);margin-bottom:8px">📍 IP Location</div>
+        ${field('IP Resuelta',`<a href="https://www.abuseipdb.com/check/${g.ip}" target="_blank" style="color:var(--cyan);text-decoration:none">${g.ip}</a>`)}
+        ${field('Ubicación',mapUrl?`<a href="${mapUrl}" target="_blank" style="color:var(--text);text-decoration:none">${loc}</a>`:loc)}
+        ${field('ISP',g.isp)}${field('Organización',g.org)}${field('ASN',g.asn)}${field('Zona horaria',g.timezone)}
+      </div>`;
+    }
+    html+=`<div class="whois-card"><div class="whois-card-title">🌐 ${w.domain}</div>
+      ${w.error?`<div style="color:var(--yellow);font-size:11px;margin-bottom:8px">⚠ WHOIS no disponible</div>`:''}
+      ${field('Registrar',w.registrar)}${field('Creación',w.created)}${field('Expiración',w.expires)}${field('Actualizado',w.updated)}${field('Nameservers',w.nameservers)}${field('Estado',w.status)}${field('Registrante',w.registrant_name)}${field('Organización',w.registrant_org)}${field('País',w.registrant_country)}${field('DNSSEC',w.dnssec)}
+      ${ipSection}</div>`;
   }
   html+='</div>';container.innerHTML=html;
 }
