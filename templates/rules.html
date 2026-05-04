@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0"><i class="bi bi-list-ul text-primary me-2"></i>Rule Requests</h4>
+  <a href="/" class="btn btn-primary btn-sm">
+    <i class="bi bi-plus-circle me-1"></i>New Request
+  </a>
+</div>
+
+{% if rules %}
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0 small">
+      <thead class="table-dark">
+        <tr>
+          <th>#</th>
+          <th>Source IP</th>
+          <th>Destination IP</th>
+          <th>Port</th>
+          <th>Proto</th>
+          <th>App-ID</th>
+          <th>Action</th>
+          <th>Direction</th>
+          <th>Status</th>
+          <th>Date</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rules %}
+        <tr>
+          <td class="text-muted">{{ r.id }}</td>
+
+          {# IP Origen with type badge #}
+          <td>
+            <code>{{ r.ip_origen }}</code>
+            {% set t = get_ip_type(r.ip_origen) %}
+            {% if t %}
+            <span class="badge {% if t == 'private' %}text-bg-info{% else %}text-bg-warning text-dark{% endif %} ms-1">{{ t }}</span>
+            {% endif %}
+          </td>
+
+          {# IP Destino with type badge #}
+          <td>
+            <code>{{ r.ip_destino }}</code>
+            {% set t = get_ip_type(r.ip_destino) %}
+            {% if t %}
+            <span class="badge {% if t == 'private' %}text-bg-info{% else %}text-bg-warning text-dark{% endif %} ms-1">{{ t }}</span>
+            {% endif %}
+          </td>
+
+          <td><code>{{ r.puerto }}</code></td>
+          <td><span class="badge text-bg-secondary">{{ r.protocolo.upper() }}</span></td>
+
+          <td>
+            {% if r.app_id %}
+              {% for aid in r.app_id.split(',') %}
+              <span class="badge text-bg-light border text-dark">{{ aid.strip() }}</span>
+              {% endfor %}
+            {% else %}
+              <span class="text-muted">—</span>
+            {% endif %}
+          </td>
+
+          <td>
+            {% if r.accion == 'allow' %}
+              <span class="badge text-bg-success">Allow</span>
+            {% elif r.accion == 'deny' %}
+              <span class="badge text-bg-danger">Deny</span>
+            {% else %}
+              <span class="badge text-bg-secondary">Drop</span>
+            {% endif %}
+          </td>
+
+          <td>
+            {% if r.direccion == 'bidireccional' %}
+              <i class="bi bi-arrow-left-right text-primary me-1"></i>
+            {% else %}
+              <i class="bi bi-arrow-right text-secondary me-1"></i>
+            {% endif %}
+            {{ r.direccion }}
+          </td>
+
+          <td>
+            <span class="badge badge-{{ r.estado }}">{{ r.estado.capitalize() }}</span>
+          </td>
+
+          <td class="text-muted">{{ r.created_at.strftime('%d/%m/%y %H:%M') }}</td>
+
+          <td>
+            <button class="btn btn-outline-danger btn-sm"
+                    data-bs-toggle="modal" data-bs-target="#deleteModal"
+                    data-rule-id="{{ r.id }}" title="Delete">
+              <i class="bi bi-trash"></i>
+            </button>
+          </td>
+        </tr>
+        {% if r.comentario %}
+        <tr class="table-light">
+          <td></td>
+          <td colspan="10" class="py-1 text-muted">
+            <i class="bi bi-chat-left-text me-1"></i>{{ r.comentario }}
+          </td>
+        </tr>
+        {% endif %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{# Delete modal #}
+<div class="modal fade" id="deleteModal" tabindex="-1">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h6 class="modal-title">Confirm Deletion</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">Delete this request?</div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+        <form id="deleteForm" method="POST">
+          <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% else %}
+<div class="card p-5 text-center text-muted">
+  <i class="bi bi-inbox display-4 mb-3"></i>
+  <p>No requests yet. <a href="/">Create the first one.</a></p>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.getElementById('deleteModal').addEventListener('show.bs.modal', e => {
+    document.getElementById('deleteForm').action = `/rules/${e.relatedTarget.dataset.ruleId}/delete`;
+  });
+</script>
+{% endblock %}

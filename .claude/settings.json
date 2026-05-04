@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip install *)",
+      "Bash(python -c \"from osint import check_insecure_ports, check_abuseipdb; print\\(check_insecure_ports\\('80,443,21'\\)\\); print\\(check_insecure_ports\\('79-81'\\)\\); print\\(check_insecure_ports\\('443,8443'\\)\\)\")",
+      "Bash(python -c \"from app import app; c = app.test_client\\(\\); import json; r = c.post\\('/api/validate-rule', json={'ip_destino':'8.8.8.8','puerto':'80'}\\); print\\(json.dumps\\(r.get_json\\(\\), indent=2\\)\\)\")",
+      "Bash(python -c \"from app import app; c = app.test_client\\(\\); import json; r = c.post\\('/api/validate-rule', json={'ip_destino':'8.8.8.8','puerto':'443'}\\); print\\(json.dumps\\(r.get_json\\(\\), indent=2\\)\\)\")",
+      "Bash(python -c \"from app import app; c = app.test_client\\(\\); import json; r = c.post\\('/api/validate-rule', json={'ip_destino':'10.0.0.1','puerto':'80'}\\); print\\(json.dumps\\(r.get_json\\(\\), indent=2\\)\\)\")"
+    ]
+  }
+}
