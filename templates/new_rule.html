@@ -139,6 +139,8 @@
 
               </div>
 
+              <input type="hidden" name="reputation_verdict[]" value="{{ rule.get('reputation_verdict','') }}">
+
               {# Validation result panel #}
               <div class="validation-panel d-none mt-3 pt-3 border-top"></div>
 
@@ -146,17 +148,17 @@
           </div>
           {% endfor %}
 
-        </div>{# /rules-container #}
+          <div id="form-actions" class="d-flex flex-wrap gap-2 my-3">
+            <button type="button" id="add-rule-btn" class="btn btn-outline-primary">
+              <i class="bi bi-plus-circle me-1"></i>Add Rule
+            </button>
+            <button type="submit" id="submit-btn" class="btn btn-primary px-4">
+              <i class="bi bi-send me-1"></i>Submit Requests
+            </button>
+            <a href="/rules" class="btn btn-outline-secondary">Cancel</a>
+          </div>
 
-        <div class="d-flex flex-wrap gap-2 mt-2">
-          <button type="button" id="add-rule-btn" class="btn btn-outline-primary">
-            <i class="bi bi-plus-circle me-1"></i>Add Rule
-          </button>
-          <button type="submit" id="submit-btn" class="btn btn-primary px-4">
-            <i class="bi bi-send me-1"></i>Submit Requests
-          </button>
-          <a href="/rules" class="btn btn-outline-secondary">Cancel</a>
-        </div>
+        </div>{# /rules-container #}
       </form>
 
     </div>
@@ -240,6 +242,8 @@
         </div>
       </div>
 
+      <input type="hidden" name="reputation_verdict[]" value="">
+
       <div class="validation-panel d-none mt-3 pt-3 border-top"></div>
 
     </div>
@@ -306,8 +310,7 @@ function applyChip(chip) {
 // ── Rule numbering & remove button state ─────────────────────────────────
 function refreshCards() {
   const cards = document.querySelectorAll('#rules-container .rule-card');
-  cards.forEach((c, i) => {
-    c.querySelector('.rule-number').textContent = i + 1;
+  cards.forEach(c => {
     c.querySelector('.remove-rule').disabled = cards.length === 1;
   });
   const n = cards.length;
@@ -342,9 +345,24 @@ document.getElementById('rules-container').addEventListener('click', e => {
 
   const btn = e.target.closest('.remove-rule');
   if (btn) {
-    const card = btn.closest('.rule-card');
-    if (document.querySelectorAll('#rules-container .rule-card').length > 1) {
-      card.remove(); refreshCards();
+    const card    = btn.closest('.rule-card');
+    const total   = document.querySelectorAll('#rules-container .rule-card').length;
+    if (total > 1) {
+      const wasActive = !card.classList.contains('rule-locked');
+      card.remove();
+
+      if (wasActive) {
+        // Undo the accidental "Add Rule": unlock the most recently locked card
+        nextRuleNum--;
+        const container   = document.getElementById('rules-container');
+        const firstLocked = container.querySelector('.rule-card.rule-locked');
+        if (firstLocked) {
+          unlockCard(firstLocked);
+          firstLocked.after(document.getElementById('form-actions'));
+        }
+      }
+
+      refreshCards();
     }
   }
 });
@@ -375,16 +393,24 @@ function unlockCard(card) {
   resetCardValidation(card);
 }
 
+// Sequence counter — starts after however many cards Jinja rendered
+let nextRuleNum = document.querySelectorAll('#rules-container .rule-card').length + 1;
+
 // ── Add rule ─────────────────────────────────────────────────────────────
 document.getElementById('add-rule-btn').addEventListener('click', () => {
-  // Lock all currently unlocked cards before adding a new one
   document.querySelectorAll('#rules-container .rule-card:not(.rule-locked)').forEach(lockCard);
 
   const clone = document.getElementById('rule-card-tpl').content.cloneNode(true);
-  document.getElementById('rules-container').prepend(clone);
+  clone.querySelector('.rule-number').textContent = nextRuleNum++;
+
+  const container = document.getElementById('rules-container');
+  container.prepend(clone);
+
+  // Keep buttons right below the active (new) card
+  container.querySelector('.rule-card').after(document.getElementById('form-actions'));
+
   refreshCards();
-  document.querySelector('#rules-container .rule-card')
-    ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  container.querySelector('.rule-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
 
 // ── Init: badges for pre-filled values (error re-render) ─────────────────
@@ -406,11 +432,25 @@ function resetCardValidation(card) {
 }
 
 async function validateCard(card) {
-  const panel = card.querySelector('.validation-panel');
+  const panel     = card.querySelector('.validation-panel');
+  const ipOrigen  = card.querySelector('[name="ip_origen[]"]').value.trim();
   const ipDestino = card.querySelector('[name="ip_destino[]"]').value.trim();
   const puerto    = card.querySelector('[name="puerto[]"]').value.trim();
+  const isEmpty   = !ipOrigen && !ipDestino && !puerto;
 
-  // Nothing to validate yet — let server catch required-field errors
+  // Active (unlocked) card with no data filled in — block submission
+  if (!card.classList.contains('rule-locked') && isEmpty) {
+    panel.classList.remove('d-none');
+    panel.classList.add('has-error');
+    panel.innerHTML = `
+      <div class="d-flex align-items-center gap-2 small text-danger">
+        <i class="bi bi-x-circle-fill"></i>
+        This rule is empty. Fill in the required fields or remove it before submitting.
+      </div>`;
+    return { valid: false };
+  }
+
+  // Locked card with no key fields — skip OSINT, let server validate
   if (!ipDestino && !puerto) {
     panel.classList.add('d-none');
     return { valid: true };
@@ -431,6 +471,9 @@ async function validateCard(card) {
     const data = await resp.json();
     renderValidationPanel(panel, data);
     if (!data.valid) panel.classList.add('has-error');
+    // Persist verdict so it gets submitted with the form
+    const verdictInput = card.querySelector('[name="reputation_verdict[]"]');
+    if (verdictInput) verdictInput.value = data.verdict || '';
     return data;
   } catch {
     panel.innerHTML = `
@@ -445,7 +488,22 @@ async function validateCard(card) {
 function renderValidationPanel(panel, data) {
   let html = '';
 
-  // Hard errors
+  // ── Verdict badge (only for public destinations) ──────────────────────
+  if (data.is_public_dest && data.verdict) {
+    const cfg = {
+      malicious:  { cls: 'danger',  icon: 'shield-fill-x',        label: 'MALICIOUS'  },
+      suspicious: { cls: 'warning', icon: 'shield-fill-exclamation', label: 'SUSPICIOUS' },
+      clean:      { cls: 'success', icon: 'shield-fill-check',     label: 'CLEAN'      },
+    }[data.verdict] || { cls: 'secondary', icon: 'shield', label: data.verdict };
+    html += `
+      <div class="mb-2">
+        <span class="badge text-bg-${cfg.cls} fs-6 px-3 py-2">
+          <i class="bi bi-${cfg.icon} me-1"></i>${cfg.label}
+        </span>
+      </div>`;
+  }
+
+  // ── Hard errors ───────────────────────────────────────────────────────
   for (const msg of (data.errors || [])) {
     html += `
       <div class="d-flex align-items-start gap-2 mb-1">
@@ -454,7 +512,7 @@ function renderValidationPanel(panel, data) {
       </div>`;
   }
 
-  // Warnings
+  // ── Warnings ──────────────────────────────────────────────────────────
   for (const msg of (data.warnings || [])) {
     html += `
       <div class="d-flex align-items-start gap-2 mb-1">
@@ -463,29 +521,47 @@ function renderValidationPanel(panel, data) {
       </div>`;
   }
 
-  // AbuseIPDB detail card
-  if (data.osint) {
-    const s = data.osint.score;
-    const cls  = s >= 75 ? 'danger' : s >= 25 ? 'warning' : s > 0 ? 'warning' : 'success';
-    const icon = s >= 75 ? 'x-circle-fill' : s > 0 ? 'exclamation-triangle-fill' : 'check-circle-fill';
-    const isp  = [data.osint.isp, data.osint.domain].filter(Boolean).join(' · ');
+  // ── AbuseIPDB detail ──────────────────────────────────────────────────
+  if (data.abuseipdb) {
+    const a    = data.abuseipdb;
+    const cls  = a.score >= 75 ? 'danger' : a.score >= 25 ? 'warning' : 'success';
+    const isp  = [a.isp, a.domain].filter(Boolean).join(' · ');
     html += `
       <div class="d-flex align-items-start gap-2 mt-1">
-        <i class="bi bi-${icon} text-${cls} flex-shrink-0 mt-1"></i>
+        <img src="https://www.abuseipdb.com/favicon.ico" width="14" height="14" class="flex-shrink-0 mt-1" onerror="this.replaceWith('🛡️')">
         <span class="small">
           <strong>AbuseIPDB:</strong>
-          confidence score <strong class="text-${cls}">${s}%</strong>
-          &nbsp;·&nbsp; ${data.osint.reports} report(s)
-          ${data.osint.country ? '&nbsp;·&nbsp; ' + data.osint.country : ''}
+          confidence <strong class="text-${cls}">${a.score}%</strong>
+          &nbsp;·&nbsp; ${a.reports} report(s)
+          ${a.country ? '&nbsp;·&nbsp; ' + a.country : ''}
           ${isp ? '<br><span class="text-muted">' + isp + '</span>' : ''}
         </span>
       </div>`;
   }
 
-  // All-clear when there's nothing to show
+  // ── VirusTotal detail ─────────────────────────────────────────────────
+  if (data.virustotal) {
+    const v   = data.virustotal;
+    const cls = v.malicious >= 3 ? 'danger' : (v.malicious > 0 || v.suspicious > 0) ? 'warning' : 'success';
+    const owner = [v.as_owner, v.country].filter(Boolean).join(' · ');
+    html += `
+      <div class="d-flex align-items-start gap-2 mt-1">
+        <img src="https://www.virustotal.com/favicon.ico" width="14" height="14" class="flex-shrink-0 mt-1" onerror="this.replaceWith('🔬')">
+        <span class="small">
+          <strong>VirusTotal:</strong>
+          <span class="text-danger">${v.malicious} malicious</span>
+          &nbsp;·&nbsp; <span class="text-warning-emphasis">${v.suspicious} suspicious</span>
+          &nbsp;·&nbsp; <span class="text-success">${v.harmless} harmless</span>
+          &nbsp;·&nbsp; ${v.undetected} undetected
+          ${owner ? '<br><span class="text-muted">' + owner + '</span>' : ''}
+        </span>
+      </div>`;
+  }
+
+  // ── All-clear ─────────────────────────────────────────────────────────
   if (!html) {
     const label = data.is_public_dest
-      ? 'Public IP — clean (no insecure ports, OSINT clear)'
+      ? 'Public IP — clean (secure ports, no threats detected)'
       : 'Private destination — port check passed';
     html = `
       <div class="d-flex align-items-center gap-2 small text-success">
@@ -510,7 +586,9 @@ document.getElementById('rules-form').addEventListener('submit', async function 
   const allValid = results.every(r => r.valid !== false);
 
   if (allValid) {
-    // All rules passed — proceed with actual form submission
+    // Re-enable disabled inputs on locked cards so they are included in the POST
+    document.querySelectorAll('#rules-container input, #rules-container select, #rules-container textarea')
+      .forEach(el => el.disabled = false);
     btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Submitting…';
     this.submit();
   } else {

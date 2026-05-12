@@ -21,7 +21,12 @@ INSECURE_PORTS = {
     8008: "HTTP-alt",
 }
 
-OSINT_BLOCK_SCORE = 75
+# ── Verdict thresholds ────────────────────────────────────────────────────
+ABUSE_MALICIOUS  = 75   # AbuseIPDB confidence score >= this → malicious
+ABUSE_SUSPICIOUS = 25   # AbuseIPDB confidence score >= this → suspicious
+
+VT_MALICIOUS_ENGINES  = 3   # VirusTotal engines flagging malicious >= this → malicious
+VT_SUSPICIOUS_ENGINES = 1   # VirusTotal engines flagging suspicious >= this → suspicious
 
 
 def check_insecure_ports(port_str):
@@ -66,8 +71,7 @@ def get_base_ip(ip_str):
 def check_abuseipdb(ip):
     """
     Query AbuseIPDB for the given IP.
-    Returns a dict with score/reports/country/isp/domain, or None if unavailable.
-    Requires the ABUSEIPDB_API_KEY environment variable.
+    Returns a dict or None if the key is not configured or the request fails.
     """
     api_key = os.environ.get("ABUSEIPDB_API_KEY")
     if not api_key:
@@ -92,3 +96,65 @@ def check_abuseipdb(ip):
     except Exception:
         pass
     return None
+
+
+def check_virustotal(ip):
+    """
+    Query VirusTotal for the given IP.
+    Returns a dict or None if the key is not configured or the request fails.
+    """
+    api_key = os.environ.get("VIRUSTOTAL_API_KEY")
+    if not api_key:
+        return None
+    try:
+        import requests
+        resp = requests.get(
+            f"https://www.virustotal.com/api/v3/ip_addresses/{ip}",
+            headers={"x-apikey": api_key},
+            timeout=6,
+        )
+        if resp.status_code == 200:
+            attrs = resp.json().get("data", {}).get("attributes", {})
+            stats = attrs.get("last_analysis_stats", {})
+            return {
+                "malicious":  stats.get("malicious", 0),
+                "suspicious": stats.get("suspicious", 0),
+                "harmless":   stats.get("harmless", 0),
+                "undetected": stats.get("undetected", 0),
+                "reputation": attrs.get("reputation", 0),
+                "country":    attrs.get("country", ""),
+                "as_owner":   attrs.get("as_owner", ""),
+            }
+    except Exception:
+        pass
+    return None
+
+
+def get_combined_verdict(abuseipdb, virustotal):
+    """
+    Combine results from both services into a single verdict.
+    Returns 'malicious', 'suspicious', or 'clean'.
+    """
+    malicious = False
+    suspicious = False
+
+    if abuseipdb:
+        score = abuseipdb["score"]
+        if score >= ABUSE_MALICIOUS:
+            malicious = True
+        elif score >= ABUSE_SUSPICIOUS:
+            suspicious = True
+
+    if virustotal:
+        vt_mal = virustotal["malicious"]
+        vt_sus = virustotal["suspicious"]
+        if vt_mal >= VT_MALICIOUS_ENGINES:
+            malicious = True
+        elif vt_mal > 0 or vt_sus >= VT_SUSPICIOUS_ENGINES:
+            suspicious = True
+
+    if malicious:
+        return "malicious"
+    if suspicious:
+        return "suspicious"
+    return "clean"
