@@ -17,12 +17,17 @@
           <div class="rule-card card mb-3 border shadow-sm">
             <div class="card-header bg-light d-flex justify-content-between align-items-center py-2">
               <span class="fw-semibold text-primary">
-                <i class="bi bi-shield-check me-2"></i>Rule <span class="rule-number">{{ loop.index }}</span>
+                <i class="bi bi-shield-check me-2 rule-icon"></i>Rule <span class="rule-number">{{ loop.index }}</span>
               </span>
-              <button type="button" class="btn btn-sm btn-outline-danger remove-rule"
-                      {% if loop.length == 1 %}disabled{% endif %}>
-                <i class="bi bi-x-lg"></i>
-              </button>
+              <div class="d-flex gap-2 align-items-center">
+                <button type="button" class="btn btn-sm btn-outline-secondary edit-rule d-none">
+                  <i class="bi bi-pencil me-1"></i>Edit
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-danger remove-rule"
+                        {% if loop.length == 1 %}disabled{% endif %}>
+                  <i class="bi bi-x-lg"></i>
+                </button>
+              </div>
             </div>
             <div class="card-body">
               <div class="row g-3">
@@ -163,11 +168,16 @@
   <div class="rule-card card mb-3 border shadow-sm">
     <div class="card-header bg-light d-flex justify-content-between align-items-center py-2">
       <span class="fw-semibold text-primary">
-        <i class="bi bi-shield-check me-2"></i>Rule <span class="rule-number"></span>
+        <i class="bi bi-shield-check me-2 rule-icon"></i>Rule <span class="rule-number"></span>
       </span>
-      <button type="button" class="btn btn-sm btn-outline-danger remove-rule">
-        <i class="bi bi-x-lg"></i>
-      </button>
+      <div class="d-flex gap-2 align-items-center">
+        <button type="button" class="btn btn-sm btn-outline-secondary edit-rule d-none">
+          <i class="bi bi-pencil me-1"></i>Edit
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-danger remove-rule">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
     </div>
     <div class="card-body">
       <div class="row g-3">
@@ -322,6 +332,14 @@ document.getElementById('rules-container').addEventListener('change', e => {
 document.getElementById('rules-container').addEventListener('click', e => {
   const chip = e.target.closest('.suggestion-chip');
   if (chip) { applyChip(chip); return; }
+
+  const editBtn = e.target.closest('.edit-rule');
+  if (editBtn) {
+    const card = editBtn.closest('.rule-card');
+    card.classList.contains('rule-editing') ? lockCard(card) : unlockCard(card);
+    return;
+  }
+
   const btn = e.target.closest('.remove-rule');
   if (btn) {
     const card = btn.closest('.rule-card');
@@ -331,12 +349,41 @@ document.getElementById('rules-container').addEventListener('click', e => {
   }
 });
 
+// ── Lock / unlock rule cards ──────────────────────────────────────────────
+function lockCard(card) {
+  card.querySelectorAll('input, select, textarea').forEach(el => el.disabled = true);
+  const btn = card.querySelector('.edit-rule');
+  btn.classList.remove('d-none', 'btn-outline-success');
+  btn.classList.add('btn-outline-secondary');
+  btn.innerHTML = '<i class="bi bi-pencil me-1"></i>Edit';
+  card.querySelector('.card-header').classList.replace('bg-light', 'bg-body-secondary');
+  card.querySelector('.rule-icon').classList.replace('bi-shield-check', 'bi-lock-fill');
+  card.classList.add('rule-locked');
+  card.classList.remove('rule-editing');
+}
+
+function unlockCard(card) {
+  card.querySelectorAll('input, select, textarea').forEach(el => el.disabled = false);
+  const btn = card.querySelector('.edit-rule');
+  btn.classList.remove('d-none', 'btn-outline-secondary');
+  btn.classList.add('btn-outline-success');
+  btn.innerHTML = '<i class="bi bi-check-lg me-1"></i>Save';
+  card.querySelector('.card-header').classList.replace('bg-body-secondary', 'bg-light');
+  card.querySelector('.rule-icon').classList.replace('bi-lock-fill', 'bi-shield-check');
+  card.classList.remove('rule-locked');
+  card.classList.add('rule-editing');
+  resetCardValidation(card);
+}
+
 // ── Add rule ─────────────────────────────────────────────────────────────
 document.getElementById('add-rule-btn').addEventListener('click', () => {
+  // Lock all currently unlocked cards before adding a new one
+  document.querySelectorAll('#rules-container .rule-card:not(.rule-locked)').forEach(lockCard);
+
   const clone = document.getElementById('rule-card-tpl').content.cloneNode(true);
-  document.getElementById('rules-container').appendChild(clone);
+  document.getElementById('rules-container').prepend(clone);
   refreshCards();
-  document.querySelectorAll('#rules-container .rule-card:last-child')[0]
+  document.querySelector('#rules-container .rule-card')
     ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
 
