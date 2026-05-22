@@ -4,7 +4,9 @@
       "Bash(python -c ':*)",
       "Bash(npm run:*)",
       "Bash(npx kill-port:*)",
-      "Bash(node -e ' *)"
+      "Bash(node -e ' *)",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(node -e \"require\\('./server/services/shodan'\\); require\\('./server/services/whois'\\); require\\('./server/services/abuseipdb'\\); require\\('./server/services/virustotal'\\); require\\('./server/services/threatfox'\\); require\\('./server/routes/ip'\\); require\\('./server/routes/domain'\\); require\\('./server/routes/hash'\\); require\\('./server/routes/whois'\\); console.log\\('OK - sin errores de sintaxis'\\)\")"
     ]
   }
 }

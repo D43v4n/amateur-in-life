@@ -336,11 +336,9 @@ function renderDomain(results,container){
     const vtCount=s.engines_malicious!=null?`<span style="font-size:10px;color:var(--text3)">${s.engines_malicious}/${s.engines_total}</span>`:'';
     const ports=s.ports?.length?s.ports.slice(0,8).map(p=>`<span class="tag">${p}</span>`).join(''):'<span class="cell-dim">—</span>';
     const vulns=s.vulns?.length?s.vulns.slice(0,3).map(v=>`<span class="tag tag-red">${v}</span>`).join(''):'';
-    const vtLink=r.sources?.find(x=>x.source==='VirusTotal')?.link;
-    const shLink=r.sources?.find(x=>x.source==='Shodan'&&x.found)?.link;
-    const tfLink=r.sources?.find(x=>x.source==='ThreatFox'&&x.found)?.link;
+    const hosts=s.hostnames?.length?`<div style="margin-top:4px">${s.hostnames.slice(0,3).map(h=>`<div style="font-size:9px;color:var(--cyan)">↳ ${h}</div>`).join('')}</div>`:'';
     const errBadge=r.errors?.length?`<span class="error-pill">⚠ ${r.errors.map(e=>e.source).join(',')}</span>`:'';
-    html+=`<tr><td class="cell-mono">${r.domain}${errBadge}</td><td>${verdictBadge(r.verdict)}${s.threatfox_family?`<div style="font-size:10px;color:var(--red);margin-top:3px">🦠 ${s.threatfox_family}</div>`:''}</td><td>${vtScore}${vtCount}${enginesDetailInline(r.engines_detail)}</td><td>${communityScore(s.community_score)}</td><td class="cell-dim">${s.country||'—'}<br>${s.org||'—'}</td><td>${ports}${vulns}</td><td>${sourceChips(r.sources,r.errors)}</td></tr>`;
+    html+=`<tr><td class="cell-mono">${r.domain}${errBadge}</td><td>${verdictBadge(r.verdict)}${s.threatfox_family?`<div style="font-size:10px;color:var(--red);margin-top:3px">🦠 ${s.threatfox_family}</div>`:''}</td><td>${vtScore}${vtCount}${enginesDetailInline(r.engines_detail)}</td><td>${communityScore(s.community_score)}</td><td class="cell-dim">${s.country||'—'}<br>${s.org||'—'}</td><td>${ports}${vulns}${hosts}</td><td>${sourceChips(r.sources,r.errors)}</td></tr>`;
   }
   html+='</tbody></table>';container.innerHTML=html;
 }
@@ -462,14 +460,13 @@ function renderIP(results,container){
     const ports=s.ports?.length?s.ports.slice(0,8).map(p=>`<span class="tag">${p}</span>`).join(''):'—';
     const vulns=s.vulns?.length?s.vulns.slice(0,3).map(v=>`<span class="tag tag-red">${v}</span>`).join(''):'—';
     const tags=s.tags?.length?s.tags.map(t=>`<span class="tag">${t}</span>`).join(''):'';
-    const vtLink=r.sources?.find(x=>x.source==='VirusTotal')?.link;
-    const shLink=r.sources?.find(x=>x.source==='Shodan'&&x.found)?.link;
-    const tfLink=r.sources?.find(x=>x.source==='ThreatFox'&&x.found)?.link;
+    const hosts=s.hostnames?.length?`<div style="margin-top:4px">${s.hostnames.slice(0,2).map(h=>`<div style="font-size:9px;color:var(--cyan)">↳ ${h}</div>`).join('')}</div>`:'';
+    const cpes=s.cpes?.length?`<div style="margin-top:3px">${s.cpes.slice(0,3).map(c=>{const parts=c.split(':');const label=(parts[3]||'')+(parts[4]?' '+parts[4]:'');return`<span class="tag" title="${c}" style="font-size:9px">${label||c}</span>`}).join('')}</div>`:'';
     const errBadge=r.errors?.length?`<span class="error-pill">⚠ ${r.errors.map(e=>e.source).join(',')}</span>`:'';
     const abuseColor=s.abuse_confidence>=80?'var(--red)':s.abuse_confidence>=25?'var(--yellow)':'var(--text3)';
     const abuseBadge=s.abuse_confidence!=null?`<div style="font-size:10px;color:${abuseColor};margin-top:3px">⚠ Abuse ${s.abuse_confidence}%${s.abuse_reports?` · ${s.abuse_reports} rep`:''}</div>`:'';
     const torBadge=s.abuse_is_tor?`<span class="tag tag-red" style="display:inline-block;margin-top:3px">TOR</span>`:'';
-    html+=`<tr><td class="cell-mono">${r.ip}${errBadge}${torBadge}${tags?`<div style="margin-top:3px">${tags}</div>`:''}</td><td>${verdictBadge(r.verdict)}${s.threatfox_family?`<div style="font-size:10px;color:var(--red);margin-top:3px">🦠 ${s.threatfox_family}</div>`:''}${abuseBadge}</td><td>${score}${enginesDetailInline(r.engines_detail)}</td><td>${communityScore(s.community_score)}</td><td class="cell-dim">${s.country||'—'}<br>${s.isp||s.org||'—'}<br><span style="color:var(--text3)">${s.asn||''}</span></td><td>${ports}</td><td>${vulns}</td><td>${sourceChips(r.sources,r.errors)}</td></tr>`;
+    html+=`<tr><td class="cell-mono">${r.ip}${errBadge}${torBadge}${hosts}${tags?`<div style="margin-top:3px">${tags}</div>`:''}</td><td>${verdictBadge(r.verdict)}${s.threatfox_family?`<div style="font-size:10px;color:var(--red);margin-top:3px">🦠 ${s.threatfox_family}</div>`:''}${abuseBadge}</td><td>${score}${enginesDetailInline(r.engines_detail)}</td><td>${communityScore(s.community_score)}</td><td class="cell-dim">${s.country||'—'}<br>${s.isp||s.org||'—'}<br><span style="color:var(--text3)">${s.asn||''}</span></td><td>${ports}${cpes}</td><td>${vulns}</td><td>${sourceChips(r.sources,r.errors)}</td></tr>`;
   }
   html+='</tbody></table>';container.innerHTML=html;
 }

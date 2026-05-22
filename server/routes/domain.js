@@ -80,8 +80,10 @@ router.post('/check', async (req, res) => {
       community_score:  vtData?.reputation ?? null,
       country:          shData?.country || vtData?.country || null,
       org:              shData?.org || null,
-      ports:            shData?.ports || [],
-      vulns:            shData?.vulns || [],
+      ports:            shData?.ports     || [],
+      vulns:            shData?.vulns     || [],
+      hostnames:        shData?.hostnames || [],
+      cpes:             shData?.cpes      || [],
       threatfox_family: tfData?.matches?.[0]?.malwareFamily || null,
     };
 
