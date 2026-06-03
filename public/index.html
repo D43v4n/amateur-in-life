@@ -82,6 +82,37 @@
   .hist-ts{font-size:10px;color:var(--text3)}.hist-items{font-size:11px;color:var(--text);margin:2px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .hist-badges{display:flex;gap:5px;align-items:center;margin-top:4px;flex-wrap:wrap}
   .nav-badge{display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;padding:0 4px;border-radius:8px;font-size:9px;background:var(--accent);color:#fff;margin-left:auto;line-height:1}
+  .port-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
+  .port-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+  .port-card.sec-danger{border-color:rgba(239,68,68,.4)}
+  .port-card.sec-warning{border-color:rgba(245,158,11,.4)}
+  .port-card.sec-safe{border-color:rgba(34,197,94,.3)}
+  .port-card-head{padding:12px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)}
+  .port-card-head.sec-danger{background:rgba(239,68,68,.06)}
+  .port-card-head.sec-warning{background:rgba(245,158,11,.06)}
+  .port-card-head.sec-safe{background:rgba(34,197,94,.05)}
+  .port-card-head.sec-info{background:var(--bg3)}
+  .port-num{font-family:var(--font-sans);font-size:22px;font-weight:800;line-height:1}
+  .port-num.sec-danger{color:var(--red)}.port-num.sec-warning{color:var(--yellow)}.port-num.sec-safe{color:var(--green)}.port-num.sec-info{color:var(--accent2)}
+  .port-meta{flex:1}.port-name{font-size:13px;font-weight:600;color:var(--text)}.port-proto{display:flex;gap:4px;margin-top:3px}
+  .proto-badge{font-size:9px;padding:1px 6px;border-radius:3px;background:var(--bg3);color:var(--text2);border:1px solid var(--border)}
+  .port-sec-badge{font-size:10px;padding:2px 8px;border-radius:20px;white-space:nowrap;font-weight:500}
+  .port-sec-badge.sec-danger{background:rgba(239,68,68,.12);color:var(--red);border:1px solid rgba(239,68,68,.3)}
+  .port-sec-badge.sec-warning{background:rgba(245,158,11,.12);color:var(--yellow);border:1px solid rgba(245,158,11,.3)}
+  .port-sec-badge.sec-safe{background:rgba(34,197,94,.1);color:var(--green);border:1px solid rgba(34,197,94,.25)}
+  .port-sec-badge.sec-info{background:rgba(122,147,184,.1);color:var(--text2);border:1px solid var(--border)}
+  .port-body{padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+  .port-desc{font-size:11px;color:var(--text2);line-height:1.6}
+  .port-warning{font-size:11px;color:var(--yellow);background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.2);border-radius:6px;padding:8px 10px;line-height:1.5}
+  .port-warning.danger{color:var(--red);background:rgba(239,68,68,.07);border-color:rgba(239,68,68,.2)}
+  .port-note{font-size:10px;color:var(--text3);font-style:italic;line-height:1.5}
+  .port-apps{display:flex;flex-wrap:wrap;gap:4px}
+  .port-footer{padding:10px 14px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;background:var(--bg3)}
+  .port-flag{display:inline-flex;align-items:center;gap:4px;font-size:10px;padding:2px 8px;border-radius:3px}
+  .port-flag-mal{background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.2)}
+  .port-flag-exfil{background:rgba(167,139,250,.1);color:#a78bfa;border:1px solid rgba(167,139,250,.2)}
+  .posture-badge{font-size:10px;padding:2px 8px;border-radius:3px;font-weight:500}
+  .posture-block{background:rgba(239,68,68,.1);color:var(--red)}.posture-restrict{background:rgba(245,158,11,.1);color:var(--yellow)}.posture-internal{background:rgba(6,182,212,.1);color:var(--cyan)}.posture-standard{background:rgba(34,197,94,.1);color:var(--green)}
 </style>
 </head>
 <body>
@@ -97,9 +128,10 @@
     <div class="nav-section">
       <div class="nav-label">Análisis</div>
       <div class="nav-item active" onclick="showPanel('domain')" id="nav-domain"><span class="ico">🌐</span> Dominios</div>
-      <div class="nav-item" onclick="showPanel('whois')"  id="nav-whois"> <span class="ico">🔎</span> WHOIS</div>
-      <div class="nav-item" onclick="showPanel('hash')"   id="nav-hash">  <span class="ico">🔐</span> Hashes</div>
-      <div class="nav-item" onclick="showPanel('ip')"     id="nav-ip">    <span class="ico">📡</span> Direcciones IP</div>
+      <div class="nav-item" onclick="showPanel('whois')"  id="nav-whois"><span class="ico">🔎</span> WHOIS</div>
+      <div class="nav-item" onclick="showPanel('hash')"   id="nav-hash"><span class="ico">🔐</span> Hashes</div>
+      <div class="nav-item" onclick="showPanel('ip')"     id="nav-ip"><span class="ico">📡</span> Direcciones IP</div>
+      <div class="nav-item" onclick="showPanel('ports')"  id="nav-ports"><span class="ico">🔌</span> Puertos</div>
     </div>
     <div class="nav-section" style="margin-top:8px">
       <div class="nav-label">Sesión</div>
@@ -109,7 +141,7 @@
       <div class="nav-label">Config</div>
       <div class="nav-item" onclick="showPanel('config')" id="nav-config"><span class="ico">⚙️</span> API Keys</div>
     </div>
-    <div class="sidebar-footer">EZWatch v1.0 · Blue Team<br><span style="color:var(--text3)">VT · Shodan · ThreatFox · WHOIS</span></div>
+    <div class="sidebar-footer">EZWatch v1.0 · Blue Team<br><span style="color:var(--text3)">VT · Shodan · ThreatFox · AbuseIPDB · WHOIS</span></div>
   </nav>
   <main class="main">
 
@@ -182,7 +214,7 @@
     <!-- IP -->
     <div class="panel" id="panel-ip">
       <div class="panel-header">
-        <div><div class="panel-title">📡 Reputación de IPs</div><div class="panel-subtitle">VirusTotal · Shodan · ThreatFox</div></div>
+        <div><div class="panel-title">📡 Reputación de IPs</div><div class="panel-subtitle">VirusTotal · Shodan · ThreatFox · AbuseIPDB</div></div>
         <button class="btn btn-ghost" onclick="clearPanel('ip')">Limpiar</button>
       </div>
       <div class="panel-body">
@@ -193,6 +225,24 @@
           <button class="btn btn-ghost" onclick="loadSample('ip')">Ejemplo</button>
         </div>
         <div id="ip-results" class="results-wrap"></div>
+      </div>
+    </div>
+
+    <!-- PORTS -->
+    <div class="panel" id="panel-ports">
+      <div class="panel-header">
+        <div><div class="panel-title">🔌 Información de Puertos</div><div class="panel-subtitle">Clasificación · Riesgos · Postura de firewall · Exposición Shodan</div></div>
+        <button class="btn btn-ghost" onclick="clearPanel('ports')">Limpiar</button>
+      </div>
+      <div class="panel-body">
+        <label>Puertos (uno por línea o separados por coma)</label>
+        <textarea id="ports-input" placeholder="80&#10;443&#10;3389&#10;4444"></textarea>
+        <div class="hint">Máx. 20 puertos · Rango válido: 1–65535</div>
+        <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-primary" id="btn-ports" onclick="analyze('ports')">🔍 Consultar</button>
+          <button class="btn btn-ghost" onclick="loadSample('ports')">Ejemplo</button>
+        </div>
+        <div id="ports-results" class="results-wrap"></div>
       </div>
     </div>
 
@@ -216,7 +266,8 @@
           <div class="whois-card"><div class="whois-card-title">🟢 VirusTotal</div><div class="whois-field"><div class="whois-key">Variable .env</div><div class="whois-val" style="color:var(--cyan)">VIRUSTOTAL_KEY</div></div><div class="whois-field"><div class="whois-key">Plan gratis</div><div class="whois-val">500 req/día · 4 req/min</div></div><div class="whois-field"><div class="whois-key">Obtener</div><div class="whois-val"><a href="https://www.virustotal.com/gui/join-us" target="_blank" style="color:var(--accent2)">virustotal.com</a></div></div></div>
           <div class="whois-card"><div class="whois-card-title">🔵 Shodan</div><div class="whois-field"><div class="whois-key">Variable .env</div><div class="whois-val" style="color:var(--cyan)">SHODAN_KEY</div></div><div class="whois-field"><div class="whois-key">Plan gratis</div><div class="whois-val">100 resultados/mes</div></div><div class="whois-field"><div class="whois-key">Obtener</div><div class="whois-val"><a href="https://account.shodan.io/register" target="_blank" style="color:var(--accent2)">shodan.io</a></div></div></div>
           <div class="whois-card"><div class="whois-card-title">🟡 ThreatFox</div><div class="whois-field"><div class="whois-key">Variable .env</div><div class="whois-val" style="color:var(--green)">THREATFOX_API_KEY</div></div><div class="whois-field"><div class="whois-key">Auth-Key</div><input type="password" id="key-threatfox" placeholder="Pegar Auth-Key..." style="font-size:11px;padding:6px 10px;margin-top:2px;width:100%"></div><div class="whois-field"><div class="whois-key">Sin key</div><div class="whois-val" style="color:var(--text3)">Funciona con rate limit reducido</div></div></div>
-          <div class="whois-card"><div class="whois-card-title">⚪ WHOIS</div><div class="whois-field"><div class="whois-key">Variable .env</div><div class="whois-val" style="color:var(--green)">No requerida</div></div><div class="whois-field"><div class="whois-key">Acceso</div><div class="whois-val" style="color:var(--green)">Público (whoisjson.com)</div></div></div>
+          <div class="whois-card"><div class="whois-card-title">🔴 AbuseIPDB</div><div class="whois-field"><div class="whois-key">Variable .env</div><div class="whois-val" style="color:var(--cyan)">ABUSEIPDB_API_KEY</div></div><div class="whois-field"><div class="whois-key">Plan gratis</div><div class="whois-val">1,000 checks/día</div></div><div class="whois-field"><div class="whois-key">Obtener</div><div class="whois-val"><a href="https://www.abuseipdb.com/api" target="_blank" style="color:var(--accent2)">abuseipdb.com</a></div></div></div>
+          <div class="whois-card"><div class="whois-card-title">⚪ WHOIS</div><div class="whois-field"><div class="whois-key">Variable .env</div><div class="whois-val" style="color:var(--green)">No requerida</div></div><div class="whois-field"><div class="whois-key">Acceso</div><div class="whois-val" style="color:var(--green)">Público (RDAP/whoisjson.com)</div></div></div>
         </div>
         <div style="margin-top:16px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px;font-size:12px">
           <div style="color:var(--accent2);margin-bottom:8px;font-weight:600">📋 Inicio rápido</div>
@@ -233,12 +284,12 @@
   </main>
 </div>
 <script>
-const SAMPLES={domain:'google.com\nmalware-test.com\npaypal-secure-login.com',hash:'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\nd41d8cd98f00b204e9800998ecf8427e',ip:'8.8.8.8\n1.1.1.1\n185.220.101.1'};
+const SAMPLES={domain:'google.com\nmalware-test.com\npaypal-secure-login.com',hash:'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\nd41d8cd98f00b204e9800998ecf8427e',ip:'8.8.8.8\n1.1.1.1\n185.220.101.1',ports:'22\n23\n80\n443\n3389\n4444\n6379\n27017'};
 
 function showPanel(id){document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));document.getElementById('panel-'+id)?.classList.add('active');document.getElementById('nav-'+id)?.classList.add('active');if(id==='history')renderHistory()}
 function toggleTheme(){const h=document.documentElement;h.setAttribute('data-theme',h.getAttribute('data-theme')==='dark'?'light':'dark');localStorage.setItem('bw-theme',h.getAttribute('data-theme'))}
 (function(){const s=localStorage.getItem('bw-theme');if(s)document.documentElement.setAttribute('data-theme',s)})();
-async function checkServer(){const el=document.getElementById('server-status');try{const r=await fetch('/api/domain',{method:'POST',headers:{'Content-Type':'application/json'},body:'{"domains":[]}',signal:AbortSignal.timeout(3000)});el.textContent='⬤ En línea';el.style.color='var(--green)'}catch{el.textContent='⬤ Sin servidor';el.style.color='var(--red)'}}
+async function checkServer(){const el=document.getElementById('server-status');try{const r=await fetch('/api/status',{signal:AbortSignal.timeout(3000)});if(r.ok){el.textContent='⬤ En línea';el.style.color='var(--green)'}else throw new Error()}catch{el.textContent='⬤ Sin servidor';el.style.color='var(--red)'}}
 checkServer();
 updateHistBadge();
 function switchHashTab(tab){document.querySelectorAll('.tabs .tab').forEach((t,i)=>t.classList.toggle('active',(i===0&&tab==='paste')||(i===1&&tab==='file')));document.getElementById('hash-tab-paste').style.display=tab==='paste'?'':'none';document.getElementById('hash-tab-file').style.display=tab==='file'?'':'none'}
@@ -309,9 +360,9 @@ async function analyze(type){
   const container=document.getElementById(type+'-results');
   btn.disabled=true;btn.innerHTML='<div class="spinner"></div> Analizando…';
   container.innerHTML='<div class="loading-row"><div class="spinner"></div> Consultando fuentes OSINT…</div>';
-  const bodyKey={domain:'domains',whois:'domains',hash:'hashes',ip:'ips'}[type];
+  const bodyKey={domain:'domains',whois:'domains',hash:'hashes',ip:'ips',ports:'ports'}[type];
   try{
-    const endpointMap={domain:'/api/domain/check',whois:'/api/whois/lookup',hash:'/api/hash/check',ip:'/api/ip/check'};
+    const endpointMap={domain:'/api/domain/check',whois:'/api/whois/lookup',hash:'/api/hash/check',ip:'/api/ip/check',ports:'/api/ports/lookup'};
     const res=await fetch(endpointMap[type],{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({[bodyKey]:items})});
     const data=await res.json();
     if(!res.ok)throw new Error(data.error||'Error '+res.status);
@@ -320,10 +371,12 @@ async function analyze(type){
     if(type==='whois') renderWhois(data.results,container);
     if(type==='hash')  renderHash(data.results,container);
     if(type==='ip')    renderIP(data.results,container);
+    if(type==='ports') renderPorts(data.results,container);
   }catch(err){
     container.innerHTML=`<div style="padding:16px;color:var(--red);font-size:12px">❌ Error: ${err.message}<br><span style="color:var(--text3);font-size:11px">¿El servidor está corriendo? Verifica que npm run dev esté activo.</span></div>`;
   }finally{
-    btn.disabled=false;btn.innerHTML=type==='whois'?'🔎 Consultar':'🔍 '+(type==='hash'?'Verificar':'Analizar');
+    const labels={whois:'🔎 Consultar',hash:'🔍 Verificar',ports:'🔍 Consultar'};
+    btn.disabled=false;btn.innerHTML=labels[type]||'🔍 Analizar';
   }
 }
 
@@ -375,9 +428,8 @@ function renderHash(results,container){
     const shortHash=r.hash.slice(0,14)+'…'+r.hash.slice(-6);
     const score=s.score!=null?scoreBar(s.score,s.score>50?'var(--red)':s.score>10?'var(--yellow)':'var(--green)'):'<span class="cell-dim">No encontrado en VT</span>';
     const vtCount=s.engines_malicious!=null?`<span style="font-size:10px;color:var(--text3)">${s.engines_malicious}/${s.engines_total}</span>`:'';
-    const vtLink=r.sources?.find(x=>x.source==='VirusTotal')?.link;
-    const tfLink=r.sources?.find(x=>x.source==='ThreatFox'&&x.found)?.link;
-    html+=`<tr><td class="cell-mono" title="${r.hash}" style="color:var(--cyan);font-size:11px">${shortHash}</td><td class="cell-dim">${r.hash_type}</td><td>${verdictBadge(r.verdict)}${s.threatfox_family?`<div style="font-size:10px;color:var(--red);margin-top:3px">🦠 ${s.threatfox_family}</div>`:''}</td><td>${score}${vtCount}${enginesDetailInline(r.engines_detail)}</td><td>${communityScore(s.community_score)}</td><td class="cell-dim">${s.file_name||'—'}<br>${s.file_type||''} ${s.file_size?`(${(s.file_size/1024).toFixed(1)}KB)`:''}<br>${s.first_seen?'Visto: '+s.first_seen:''}</td><td>${sourceChips(r.sources,r.errors)}</td></tr>`;
+    const errBadge=r.errors?.length?`<span class="error-pill">⚠ ${r.errors.map(e=>e.source).join(',')}</span>`:'';
+    html+=`<tr><td class="cell-mono" title="${r.hash}" style="color:var(--cyan);font-size:11px">${shortHash}${errBadge}</td><td class="cell-dim">${r.hash_type}</td><td>${verdictBadge(r.verdict)}${s.threatfox_family?`<div style="font-size:10px;color:var(--red);margin-top:3px">🦠 ${s.threatfox_family}</div>`:''}</td><td>${score}${vtCount}${enginesDetailInline(r.engines_detail)}</td><td>${communityScore(s.community_score)}</td><td class="cell-dim">${s.file_name||'—'}<br>${s.file_type||''} ${s.file_size?`(${(s.file_size/1024).toFixed(1)}KB)`:''}<br>${s.first_seen?'Visto: '+s.first_seen:''}</td><td>${sourceChips(r.sources,r.errors)}</td></tr>`;
   }
   html+='</tbody></table>';container.innerHTML=html;
 }
@@ -385,8 +437,8 @@ function renderHash(results,container){
 // ── Historial de sesión (sessionStorage) ─────────────────────
 const HIST_KEY='bw-history';
 const HIST_MAX=40;
-const TYPE_ICO={domain:'🌐',ip:'📡',hash:'🔐',whois:'🔎'};
-const TYPE_LBL={domain:'Dominios',ip:'IPs',hash:'Hashes',whois:'WHOIS'};
+const TYPE_ICO={domain:'🌐',ip:'📡',hash:'🔐',whois:'🔎',ports:'🔌'};
+const TYPE_LBL={domain:'Dominios',ip:'IPs',hash:'Hashes',whois:'WHOIS',ports:'Puertos'};
 
 function saveToHistory(type,items,data){
   const hist=loadHistData();
@@ -449,6 +501,66 @@ function restoreFromHistory(id){
   else if(entry.type==='whois')renderWhois(entry.data.results,container);
   else if(entry.type==='hash')renderHash(entry.data.results,container);
   else if(entry.type==='ip')renderIP(entry.data.results,container);
+  else if(entry.type==='ports')renderPorts(entry.data.results,container);
+}
+
+function renderPorts(results,container){
+  const SEC_LABEL={danger:'🚫 Peligroso',warning:'⚠ No cifrado',safe:'✔ Seguro',info:'ℹ Informativo'};
+  const POSTURE_LABEL={block:'🚫 Bloquear',restrict:'⚠ Restringir',internal:'🔒 Solo interno',standard:'✔ Estándar'};
+  const POSTURE_CLASS={block:'posture-block',restrict:'posture-restrict',internal:'posture-internal',standard:'posture-standard'};
+
+  // summary counts
+  const danger=results.filter(r=>r.security==='danger').length;
+  const warn=results.filter(r=>r.security==='warning').length;
+  const safe=results.filter(r=>r.security==='safe').length;
+  let html=`<div class="summary-row">
+    <div class="summary-card"><div class="val val-red">${danger}</div><div class="lbl">PELIGROSOS</div></div>
+    <div class="summary-card"><div class="val val-yellow">${warn}</div><div class="lbl">NO CIFRADOS</div></div>
+    <div class="summary-card"><div class="val val-green">${safe}</div><div class="lbl">SEGUROS</div></div>
+    <div class="summary-card"><div class="val val-blue">${results.length}</div><div class="lbl">TOTAL</div></div>
+  </div><div class="port-grid">`;
+
+  for(const r of results){
+    const sec=r.security||'info';
+    const apps=r.apps?.length?r.apps.map(a=>`<span class="tag">${a}</span>`).join(''):'<span class="cell-dim">—</span>';
+    const protos=(r.proto||[]).map(p=>`<span class="proto-badge">${p}</span>`).join('');
+    const flags=[
+      r.malware?`<span class="port-flag port-flag-mal">☠ C2/Malware</span>`:'',
+      r.exfil?`<span class="port-flag port-flag-exfil">📤 Exfiltración</span>`:'',
+    ].filter(Boolean).join('');
+    const secureAlt=r.secure_alt?`<div style="font-size:11px;color:var(--green);margin-top:4px">→ Usar <strong>${r.secure_alt.name}</strong> (puerto ${r.secure_alt.port})</div>`:'';
+    const exposure=r.exposure!=null?`<span style="font-size:10px;color:var(--text3)">🌐 ${r.exposure.toLocaleString()} hosts expuestos en internet</span>`:'';
+    const shodanLink=`<a href="${r.shodan_link}" target="_blank" style="font-size:10px;color:var(--accent2);text-decoration:none">Ver en Shodan →</a>`;
+
+    html+=`<div class="port-card sec-${sec}">
+      <div class="port-card-head sec-${sec}">
+        <div class="port-num sec-${sec}">${r.port}</div>
+        <div class="port-meta">
+          <div class="port-name">${r.name}</div>
+          <div class="port-proto">${protos||'<span class="proto-badge">—</span>'}</div>
+        </div>
+        <span class="port-sec-badge sec-${sec}">${SEC_LABEL[sec]||sec}</span>
+      </div>
+      <div class="port-body">
+        <div class="port-desc">${r.description}</div>
+        ${r.warning?`<div class="port-warning ${sec==='danger'?'danger':''}">${r.warning}${secureAlt}</div>`:(secureAlt?`<div style="font-size:11px;color:var(--green)">${secureAlt}</div>`:'')}
+        ${r.note?`<div class="port-note">ℹ ${r.note}</div>`:''}
+        ${r.apps?.length?`<div><div style="font-size:9px;letter-spacing:.8px;text-transform:uppercase;color:var(--text3);margin-bottom:4px">Aplicaciones</div><div class="port-apps">${apps}</div></div>`:''}
+      </div>
+      <div class="port-footer">
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+          <span class="posture-badge ${POSTURE_CLASS[r.posture]||'posture-standard'}">${POSTURE_LABEL[r.posture]||r.posture}</span>
+          ${flags}
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px">
+          ${exposure}
+          ${shodanLink}
+        </div>
+      </div>
+    </div>`;
+  }
+  html+='</div>';
+  container.innerHTML=html;
 }
 
 function renderIP(results,container){

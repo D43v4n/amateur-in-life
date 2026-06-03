@@ -1,0 +1,586 @@
+// data/ports.js — Base de datos curada de puertos para Blue Team
+// security: 'safe' | 'warning' | 'danger' | 'info'
+// posture:  'block' | 'restrict' | 'internal' | 'standard'
+// exfil:    true si es vector conocido de exfiltración de datos
+
+const PORTS = {
+  // ── FTP ───────────────────────────────────────────────────────
+  20: {
+    name: 'FTP Data', proto: ['TCP'], category: 'file-transfer',
+    security: 'warning',
+    description: 'Canal de datos de FTP. Transfiere archivos en texto plano sin cifrado.',
+    apps: ['FileZilla Server', 'vsftpd', 'ProFTPD'],
+    warning: 'FTP no cifra credenciales ni datos. Un atacante en la red puede capturar usuarios, contraseñas y archivos completos.',
+    secure_alt: { port: 22, name: 'SFTP (SSH File Transfer)' },
+    posture: 'block', malware: false, exfil: true,
+  },
+  21: {
+    name: 'FTP Control', proto: ['TCP'], category: 'file-transfer',
+    security: 'warning',
+    description: 'Canal de control de FTP. Envía comandos y credenciales en texto plano.',
+    apps: ['FileZilla', 'vsftpd', 'Pure-FTPd', 'WinSCP (modo FTP)'],
+    warning: 'Credenciales FTP viajan en texto plano. Sustituir por SFTP (puerto 22) o FTPS (puerto 990).',
+    secure_alt: { port: 22, name: 'SFTP' },
+    posture: 'block', malware: false, exfil: true,
+  },
+
+  // ── SSH / Telnet ───────────────────────────────────────────────
+  22: {
+    name: 'SSH', proto: ['TCP'], category: 'remote-access',
+    security: 'safe',
+    description: 'Secure Shell — acceso remoto y transferencia de archivos cifrados.',
+    apps: ['OpenSSH', 'PuTTY', 'WinSCP', 'Bitvise'],
+    posture: 'restrict', malware: false, exfil: false,
+  },
+  23: {
+    name: 'Telnet', proto: ['TCP'], category: 'remote-access',
+    security: 'danger',
+    description: 'Protocolo de acceso remoto sin cifrado, obsoleto desde los años 90.',
+    apps: ['Telnet client', 'dispositivos legacy (routers, switches antiguos)'],
+    warning: 'Telnet transmite TODO en texto plano: usuario, contraseña, comandos y respuestas. Debe estar bloqueado en cualquier red moderna.',
+    secure_alt: { port: 22, name: 'SSH' },
+    posture: 'block', malware: false, exfil: true,
+  },
+
+  // ── Email ──────────────────────────────────────────────────────
+  25: {
+    name: 'SMTP', proto: ['TCP'], category: 'email',
+    security: 'warning',
+    description: 'Simple Mail Transfer Protocol — envío de correo sin cifrar.',
+    apps: ['Postfix', 'Sendmail', 'Exchange'],
+    warning: 'SMTP en puerto 25 no usa cifrado obligatorio. Puerto 587 con STARTTLS es el estándar moderno.',
+    secure_alt: { port: 587, name: 'SMTP Submission (STARTTLS)' },
+    posture: 'restrict', malware: false, exfil: true,
+  },
+  110: {
+    name: 'POP3', proto: ['TCP'], category: 'email',
+    security: 'warning',
+    description: 'Post Office Protocol v3 — descarga de correo sin cifrar.',
+    apps: ['Thunderbird', 'Outlook (modo legacy)'],
+    warning: 'POP3 transmite credenciales en texto plano.',
+    secure_alt: { port: 995, name: 'POP3S' },
+    posture: 'block', malware: false, exfil: false,
+  },
+  143: {
+    name: 'IMAP', proto: ['TCP'], category: 'email',
+    security: 'warning',
+    description: 'Internet Message Access Protocol — acceso a correo sin cifrar.',
+    apps: ['Thunderbird', 'Apple Mail', 'Outlook'],
+    warning: 'IMAP sin TLS expone credenciales y contenido del correo.',
+    secure_alt: { port: 993, name: 'IMAPS' },
+    posture: 'block', malware: false, exfil: false,
+  },
+  465: {
+    name: 'SMTPS', proto: ['TCP'], category: 'email',
+    security: 'safe',
+    description: 'SMTP sobre SSL/TLS — envío de correo cifrado.',
+    apps: ['Clientes de correo modernos'],
+    posture: 'standard', malware: false, exfil: false,
+  },
+  587: {
+    name: 'SMTP Submission', proto: ['TCP'], category: 'email',
+    security: 'safe',
+    description: 'Puerto estándar para envío de correo con STARTTLS.',
+    apps: ['Thunderbird', 'Outlook', 'Gmail SMTP'],
+    posture: 'standard', malware: false, exfil: false,
+  },
+  993: {
+    name: 'IMAPS', proto: ['TCP'], category: 'email',
+    security: 'safe',
+    description: 'IMAP sobre SSL/TLS.',
+    apps: ['Thunderbird', 'Apple Mail', 'Outlook'],
+    posture: 'standard', malware: false, exfil: false,
+  },
+  995: {
+    name: 'POP3S', proto: ['TCP'], category: 'email',
+    security: 'safe',
+    description: 'POP3 sobre SSL/TLS.',
+    apps: ['Clientes de correo'],
+    posture: 'standard', malware: false, exfil: false,
+  },
+
+  // ── Web ────────────────────────────────────────────────────────
+  80: {
+    name: 'HTTP', proto: ['TCP'], category: 'web',
+    security: 'warning',
+    description: 'Hypertext Transfer Protocol — tráfico web sin cifrar.',
+    apps: ['Apache', 'Nginx', 'IIS', 'Caddy'],
+    warning: 'HTTP no cifra el tráfico. Credenciales, sesiones y datos viajan en texto plano. Migrar a HTTPS.',
+    secure_alt: { port: 443, name: 'HTTPS' },
+    posture: 'restrict', malware: false, exfil: true,
+  },
+  443: {
+    name: 'HTTPS', proto: ['TCP'], category: 'web',
+    security: 'safe',
+    description: 'HTTP sobre TLS — tráfico web cifrado. Estándar actual.',
+    apps: ['Apache', 'Nginx', 'IIS', 'Cloudflare'],
+    posture: 'standard', malware: false, exfil: true,
+    note: 'Aunque es seguro, también es vector de exfiltración por ser tráfico permitido en casi todas las redes.',
+  },
+  8080: {
+    name: 'HTTP Alternativo', proto: ['TCP'], category: 'web',
+    security: 'warning',
+    description: 'Puerto alternativo para HTTP. Frecuente en proxies, dev y paneles admin.',
+    apps: ['Proxies HTTP', 'Tomcat', 'Jenkins', 'paneles de administración'],
+    warning: 'Frecuentemente sin cifrado. Paneles de administración en este puerto son objetivo común de ataques.',
+    secure_alt: { port: 8443, name: 'HTTPS alt (8443)' },
+    posture: 'restrict', malware: false, exfil: false,
+  },
+  8443: {
+    name: 'HTTPS Alternativo', proto: ['TCP'], category: 'web',
+    security: 'safe',
+    description: 'Puerto alternativo para HTTPS. Usado en paneles de gestión.',
+    apps: ['Tomcat HTTPS', 'Kubernetes API alt', 'paneles admin'],
+    posture: 'restrict', malware: false, exfil: false,
+  },
+
+  // ── DNS ────────────────────────────────────────────────────────
+  53: {
+    name: 'DNS', proto: ['TCP', 'UDP'], category: 'infrastructure',
+    security: 'info',
+    description: 'Domain Name System — resolución de nombres de dominio.',
+    apps: ['BIND', 'Unbound', 'Windows DNS', 'dnsmasq'],
+    posture: 'restrict', malware: false, exfil: true,
+    note: 'DNS es el vector de exfiltración más usado por malware (DNS tunneling). Monitorear queries inusuales y volumen alto.',
+  },
+  853: {
+    name: 'DNS over TLS (DoT)', proto: ['TCP'], category: 'infrastructure',
+    security: 'safe',
+    description: 'DNS cifrado sobre TLS. Evita espionaje y manipulación de queries DNS.',
+    apps: ['Cloudflare 1.1.1.1', 'Google 8.8.8.8', 'Quad9'],
+    posture: 'standard', malware: false, exfil: false,
+  },
+
+  // ── DHCP / NTP ────────────────────────────────────────────────
+  67: {
+    name: 'DHCP Server', proto: ['UDP'], category: 'infrastructure',
+    security: 'info',
+    description: 'Asignación dinámica de IPs. Solo debe escuchar en servidores DHCP autorizados.',
+    apps: ['isc-dhcp-server', 'Windows DHCP Server', 'dnsmasq'],
+    posture: 'internal', malware: false, exfil: false,
+  },
+  68: {
+    name: 'DHCP Client', proto: ['UDP'], category: 'infrastructure',
+    security: 'info',
+    description: 'Puerto cliente DHCP. Recibe configuración de red.',
+    apps: ['Clientes de red'],
+    posture: 'internal', malware: false, exfil: false,
+  },
+  123: {
+    name: 'NTP', proto: ['UDP'], category: 'infrastructure',
+    security: 'info',
+    description: 'Network Time Protocol — sincronización de tiempo.',
+    apps: ['ntpd', 'chrony', 'Windows Time Service'],
+    posture: 'restrict', malware: false, exfil: false,
+    note: 'NTP puede ser abusado para ataques de amplificación DDoS si está expuesto a internet.',
+  },
+
+  // ── SNMP / Syslog ─────────────────────────────────────────────
+  161: {
+    name: 'SNMP', proto: ['UDP'], category: 'monitoring',
+    security: 'warning',
+    description: 'Simple Network Management Protocol — gestión y monitoreo de red.',
+    apps: ['Cacti', 'Zabbix', 'PRTG', 'dispositivos de red'],
+    warning: 'SNMPv1/v2c usan community strings en texto plano. Usar SNMPv3 con autenticación y cifrado.',
+    posture: 'internal', malware: false, exfil: false,
+  },
+  162: {
+    name: 'SNMP Trap', proto: ['UDP'], category: 'monitoring',
+    security: 'warning',
+    description: 'Receptor de alertas SNMP. Mismo riesgo que el puerto 161.',
+    apps: ['NMS systems', 'Zabbix'],
+    warning: 'Mismo vector de riesgo que SNMP 161. Restringir a IPs de gestión.',
+    posture: 'internal', malware: false, exfil: false,
+  },
+  514: {
+    name: 'Syslog', proto: ['UDP', 'TCP'], category: 'monitoring',
+    security: 'warning',
+    description: 'Protocolo de logs del sistema. UDP no garantiza entrega ni cifrado.',
+    apps: ['rsyslog', 'syslog-ng', 'SIEM collectors'],
+    warning: 'Syslog UDP no tiene autenticación. Un atacante puede inyectar logs falsos o interceptar eventos de seguridad.',
+    posture: 'internal', malware: false, exfil: false,
+  },
+
+  // ── LDAP / Kerberos ───────────────────────────────────────────
+  88: {
+    name: 'Kerberos', proto: ['TCP', 'UDP'], category: 'auth',
+    security: 'info',
+    description: 'Protocolo de autenticación Kerberos — usado en entornos Active Directory.',
+    apps: ['Active Directory', 'MIT Kerberos'],
+    posture: 'internal', malware: false, exfil: false,
+    note: 'Objetivo de ataques Pass-the-Ticket y Kerberoasting. Monitorear tickets de servicio inusuales.',
+  },
+  389: {
+    name: 'LDAP', proto: ['TCP', 'UDP'], category: 'auth',
+    security: 'warning',
+    description: 'Lightweight Directory Access Protocol — sin cifrado.',
+    apps: ['Active Directory', 'OpenLDAP', 'FreeIPA'],
+    warning: 'LDAP sin TLS expone credenciales y datos del directorio. Usar LDAPS (636) o STARTTLS.',
+    secure_alt: { port: 636, name: 'LDAPS' },
+    posture: 'internal', malware: false, exfil: false,
+  },
+  636: {
+    name: 'LDAPS', proto: ['TCP'], category: 'auth',
+    security: 'safe',
+    description: 'LDAP sobre SSL/TLS.',
+    apps: ['Active Directory LDAPS', 'OpenLDAP'],
+    posture: 'internal', malware: false, exfil: false,
+  },
+
+  // ── Microsoft / Windows ───────────────────────────────────────
+  135: {
+    name: 'MSRPC', proto: ['TCP'], category: 'windows',
+    security: 'danger',
+    description: 'Microsoft RPC Endpoint Mapper. Puerto de entrada para servicios Windows remotos.',
+    apps: ['Windows RPC', 'DCOM', 'WMI'],
+    warning: 'Nunca debe estar expuesto a internet. Historial de vulnerabilidades críticas (MS03-026, EternalBlue precursor). Objetivo frecuente de movimiento lateral.',
+    posture: 'block', malware: false, exfil: false,
+  },
+  139: {
+    name: 'NetBIOS Session', proto: ['TCP'], category: 'windows',
+    security: 'danger',
+    description: 'NetBIOS Session Service — compartición de archivos e impresoras legacy.',
+    apps: ['Samba', 'Windows File Sharing'],
+    warning: 'Debe estar bloqueado en el perímetro. Expuesto históricamente a exploits críticos. Reemplazado por SMB directo (445).',
+    posture: 'block', malware: false, exfil: false,
+  },
+  445: {
+    name: 'SMB', proto: ['TCP'], category: 'windows',
+    security: 'danger',
+    description: 'Server Message Block — compartición de archivos Windows.',
+    apps: ['Windows File Sharing', 'Samba', 'Active Directory'],
+    warning: 'Nunca exponer a internet. EternalBlue (MS17-010) y WannaCry usaron este puerto. Vector principal de ransomware y movimiento lateral.',
+    posture: 'block', malware: true, exfil: false,
+  },
+  3389: {
+    name: 'RDP', proto: ['TCP'], category: 'remote-access',
+    security: 'danger',
+    description: 'Remote Desktop Protocol — escritorio remoto Windows.',
+    apps: ['Windows Remote Desktop', 'mstsc.exe'],
+    warning: 'RDP expuesto a internet es el vector #1 de ransomware. Si es necesario, proteger con MFA, VPN, y Network Level Authentication (NLA). Considerar cambiar el puerto.',
+    posture: 'block', malware: true, exfil: false,
+  },
+  5985: {
+    name: 'WinRM HTTP', proto: ['TCP'], category: 'windows',
+    security: 'danger',
+    description: 'Windows Remote Management sobre HTTP — PowerShell remoting.',
+    apps: ['PowerShell Remoting', 'Ansible WinRM', 'WinRM'],
+    warning: 'WinRM en HTTP (sin cifrar) no debe estar expuesto. Usar puerto 5986 con HTTPS o restringir a hosts de gestión.',
+    secure_alt: { port: 5986, name: 'WinRM HTTPS' },
+    posture: 'internal', malware: false, exfil: false,
+  },
+  5986: {
+    name: 'WinRM HTTPS', proto: ['TCP'], category: 'windows',
+    security: 'info',
+    description: 'Windows Remote Management sobre HTTPS.',
+    apps: ['PowerShell Remoting', 'Ansible'],
+    posture: 'internal', malware: false, exfil: false,
+  },
+
+  // ── Bases de datos ────────────────────────────────────────────
+  1433: {
+    name: 'MSSQL', proto: ['TCP'], category: 'database',
+    security: 'danger',
+    description: 'Microsoft SQL Server.',
+    apps: ['SQL Server', 'SSMS', 'Azure SQL'],
+    warning: 'Base de datos nunca debe estar expuesta a internet directamente. Requiere autenticación fuerte y cifrado de conexión.',
+    posture: 'internal', malware: false, exfil: true,
+  },
+  1521: {
+    name: 'Oracle DB', proto: ['TCP'], category: 'database',
+    security: 'danger',
+    description: 'Oracle Database listener.',
+    apps: ['Oracle Database', 'SQL*Plus'],
+    warning: 'Base de datos nunca debe estar expuesta a internet.',
+    posture: 'internal', malware: false, exfil: true,
+  },
+  3306: {
+    name: 'MySQL / MariaDB', proto: ['TCP'], category: 'database',
+    security: 'danger',
+    description: 'MySQL / MariaDB database server.',
+    apps: ['MySQL', 'MariaDB', 'phpMyAdmin backend'],
+    warning: 'Nunca exponer a internet. Objetivo frecuente de credential stuffing y exploits.',
+    posture: 'internal', malware: false, exfil: true,
+  },
+  5432: {
+    name: 'PostgreSQL', proto: ['TCP'], category: 'database',
+    security: 'danger',
+    description: 'PostgreSQL database server.',
+    apps: ['PostgreSQL', 'pgAdmin'],
+    warning: 'Nunca exponer a internet.',
+    posture: 'internal', malware: false, exfil: true,
+  },
+  6379: {
+    name: 'Redis', proto: ['TCP'], category: 'database',
+    security: 'danger',
+    description: 'Redis in-memory data store. Sin autenticación por defecto.',
+    apps: ['Redis', 'Redis Sentinel'],
+    warning: 'Redis sin autenticación expuesto a internet permite lectura/escritura arbitraria. Miles de instancias comprometidas anualmente.',
+    posture: 'internal', malware: false, exfil: true,
+  },
+  27017: {
+    name: 'MongoDB', proto: ['TCP'], category: 'database',
+    security: 'danger',
+    description: 'MongoDB — sin autenticación en configuración por defecto antigua.',
+    apps: ['MongoDB', 'MongoDB Compass'],
+    warning: 'MongoDB sin auth expuesto a internet es uno de los datos más filtrados. Verificar autenticación habilitada.',
+    posture: 'internal', malware: false, exfil: true,
+  },
+  9200: {
+    name: 'Elasticsearch HTTP', proto: ['TCP'], category: 'database',
+    security: 'danger',
+    description: 'Elasticsearch REST API. Sin autenticación en versiones antiguas.',
+    apps: ['Elasticsearch', 'Kibana backend'],
+    warning: 'Elasticsearch expuesto sin auth ha causado miles de filtraciones. Habilitar X-Pack Security.',
+    posture: 'internal', malware: false, exfil: true,
+  },
+  9300: {
+    name: 'Elasticsearch Cluster', proto: ['TCP'], category: 'database',
+    security: 'danger',
+    description: 'Comunicación inter-nodo de Elasticsearch.',
+    apps: ['Elasticsearch cluster'],
+    warning: 'Solo debe ser accesible entre nodos del cluster.',
+    posture: 'internal', malware: false, exfil: false,
+  },
+
+  // ── VPN / Tunneling ───────────────────────────────────────────
+  500: {
+    name: 'IKE / IPSec', proto: ['UDP'], category: 'vpn',
+    security: 'safe',
+    description: 'Internet Key Exchange — negociación de VPN IPSec.',
+    apps: ['Cisco VPN', 'strongSwan', 'Windows IPSec'],
+    posture: 'restrict', malware: false, exfil: false,
+  },
+  1194: {
+    name: 'OpenVPN', proto: ['UDP', 'TCP'], category: 'vpn',
+    security: 'safe',
+    description: 'OpenVPN — VPN de código abierto ampliamente usada.',
+    apps: ['OpenVPN', 'OpenVPN Access Server'],
+    posture: 'restrict', malware: false, exfil: false,
+  },
+  1723: {
+    name: 'PPTP', proto: ['TCP'], category: 'vpn',
+    security: 'warning',
+    description: 'Point-to-Point Tunneling Protocol — VPN obsoleta.',
+    apps: ['Windows PPTP', 'routers legacy'],
+    warning: 'PPTP tiene vulnerabilidades criptográficas conocidas (MS-CHAPv2 roto). Reemplazar con IKEv2/IPSec o WireGuard.',
+    secure_alt: { port: 51820, name: 'WireGuard' },
+    posture: 'block', malware: false, exfil: false,
+  },
+  4500: {
+    name: 'IPSec NAT-T', proto: ['UDP'], category: 'vpn',
+    security: 'safe',
+    description: 'IPSec NAT Traversal — requerido cuando hay NAT en la ruta VPN.',
+    apps: ['Cisco VPN', 'strongSwan', 'Windows IKEv2'],
+    posture: 'restrict', malware: false, exfil: false,
+  },
+  51820: {
+    name: 'WireGuard', proto: ['UDP'], category: 'vpn',
+    security: 'safe',
+    description: 'WireGuard VPN — moderno, rápido, y criptográficamente sólido.',
+    apps: ['WireGuard'],
+    posture: 'restrict', malware: false, exfil: false,
+  },
+
+  // ── Proxies ────────────────────────────────────────────────────
+  1080: {
+    name: 'SOCKS Proxy', proto: ['TCP'], category: 'proxy',
+    security: 'warning',
+    description: 'Puerto estándar para proxies SOCKS4/SOCKS5.',
+    apps: ['Shadowsocks', 'Dante', 'Tor SOCKS'],
+    warning: 'SOCKS proxy expuesto puede ser abusado para anonimización de ataques o bypass de controles de red.',
+    posture: 'restrict', malware: true, exfil: true,
+  },
+  3128: {
+    name: 'Squid Proxy', proto: ['TCP'], category: 'proxy',
+    security: 'info',
+    description: 'Puerto por defecto del proxy HTTP Squid.',
+    apps: ['Squid', 'proxies corporativos'],
+    posture: 'internal', malware: false, exfil: false,
+  },
+
+  // ── VoIP / SIP ────────────────────────────────────────────────
+  5060: {
+    name: 'SIP', proto: ['TCP', 'UDP'], category: 'voip',
+    security: 'warning',
+    description: 'Session Initiation Protocol — señalización VoIP sin cifrar.',
+    apps: ['Asterisk', 'FreeSWITCH', 'teléfonos IP'],
+    warning: 'SIP sin TLS expone metadatos de llamadas. Usar SIPS (puerto 5061) con TLS.',
+    secure_alt: { port: 5061, name: 'SIPS (SIP over TLS)' },
+    posture: 'restrict', malware: false, exfil: false,
+  },
+  5061: {
+    name: 'SIPS', proto: ['TCP'], category: 'voip',
+    security: 'safe',
+    description: 'SIP sobre TLS — señalización VoIP cifrada.',
+    apps: ['Asterisk TLS', 'FreeSWITCH TLS'],
+    posture: 'restrict', malware: false, exfil: false,
+  },
+
+  // ── Remote Desktop / VNC ─────────────────────────────────────
+  5900: {
+    name: 'VNC', proto: ['TCP'], category: 'remote-access',
+    security: 'danger',
+    description: 'Virtual Network Computing — escritorio remoto multiplataforma.',
+    apps: ['RealVNC', 'TightVNC', 'UltraVNC', 'TigerVNC'],
+    warning: 'VNC frecuentemente configurado sin contraseña o con contraseña débil. Expuesto a internet es objetivo prioritario de atacantes. Usar siempre sobre SSH tunnel.',
+    posture: 'block', malware: false, exfil: false,
+  },
+
+  // ── Kubernetes / Containers ───────────────────────────────────
+  2375: {
+    name: 'Docker API (sin TLS)', proto: ['TCP'], category: 'containers',
+    security: 'danger',
+    description: 'API del daemon Docker sin cifrado ni autenticación.',
+    apps: ['Docker'],
+    warning: 'Docker API sin TLS expuesto = root en el host garantizado. Nunca exponer. Usar socket Unix local o TLS mutuo (puerto 2376).',
+    secure_alt: { port: 2376, name: 'Docker API con TLS' },
+    posture: 'block', malware: false, exfil: true,
+  },
+  2376: {
+    name: 'Docker API (TLS)', proto: ['TCP'], category: 'containers',
+    security: 'info',
+    description: 'API del daemon Docker con TLS mutuo.',
+    apps: ['Docker', 'Docker Swarm'],
+    posture: 'internal', malware: false, exfil: false,
+  },
+  6443: {
+    name: 'Kubernetes API', proto: ['TCP'], category: 'containers',
+    security: 'info',
+    description: 'API server de Kubernetes.',
+    apps: ['kubectl', 'Kubernetes control plane'],
+    posture: 'internal', malware: false, exfil: false,
+    note: 'Verificar RBAC correctamente configurado. Acceso no autorizado al API server = compromiso total del cluster.',
+  },
+
+  // ── Mensajería / IRC ──────────────────────────────────────────
+  6667: {
+    name: 'IRC', proto: ['TCP'], category: 'legacy',
+    security: 'danger',
+    description: 'Internet Relay Chat — protocolo de chat legacy.',
+    apps: ['IRC clients', 'botnets C2'],
+    warning: 'Puerto clásico para Command & Control (C2) de botnets. Tráfico IRC saliente inusual es señal fuerte de infección.',
+    posture: 'block', malware: true, exfil: false,
+  },
+  6666: {
+    name: 'IRC alt / Backdoor', proto: ['TCP'], category: 'legacy',
+    security: 'danger',
+    description: 'Puerto alternativo IRC, también usado por malware.',
+    apps: ['IRC', 'backdoors varios'],
+    warning: 'Frecuentemente usado por malware y backdoors. Sin uso legítimo justificado en redes corporativas.',
+    posture: 'block', malware: true, exfil: false,
+  },
+
+  // ── Malware / Herramientas ofensivas ──────────────────────────
+  4444: {
+    name: 'Metasploit Default', proto: ['TCP'], category: 'malware',
+    security: 'danger',
+    description: 'Puerto de listener por defecto de Metasploit Framework.',
+    apps: ['Metasploit meterpreter', 'reverse shells'],
+    warning: 'Tráfico en este puerto dentro de la red es indicador de compromiso (IoC). Cualquier conexión debe investigarse de inmediato.',
+    posture: 'block', malware: true, exfil: true,
+  },
+  31337: {
+    name: 'Back Orifice', proto: ['TCP', 'UDP'], category: 'malware',
+    security: 'danger',
+    description: 'Puerto del troyano Back Orifice (1998). Aún usado como referencia.',
+    apps: ['Back Orifice RAT', 'variantes de RATs'],
+    warning: 'Puerto histórico de RAT. Su nombre es "elite" en l33tspeak. Cualquier tráfico aquí es sospechoso.',
+    posture: 'block', malware: true, exfil: true,
+  },
+  12345: {
+    name: 'NetBus / misc', proto: ['TCP'], category: 'malware',
+    security: 'danger',
+    description: 'Puerto del troyano NetBus. También usado por aplicaciones custom.',
+    apps: ['NetBus RAT', 'aplicaciones custom'],
+    warning: 'Puerto asociado a RATs clásicos. Sin uso estándar legítimo.',
+    posture: 'block', malware: true, exfil: false,
+  },
+
+  // ── Big Data / Message Queues ─────────────────────────────────
+  2181: {
+    name: 'Apache ZooKeeper', proto: ['TCP'], category: 'infrastructure',
+    security: 'warning',
+    description: 'ZooKeeper client port — coordinación distribuida.',
+    apps: ['Apache ZooKeeper', 'Kafka', 'HBase'],
+    warning: 'ZooKeeper sin autenticación expone configuración y coordinación del cluster. Nunca exponer a internet.',
+    posture: 'internal', malware: false, exfil: false,
+  },
+  9092: {
+    name: 'Apache Kafka', proto: ['TCP'], category: 'infrastructure',
+    security: 'warning',
+    description: 'Kafka broker — message queue de alto rendimiento.',
+    apps: ['Apache Kafka', 'Confluent Platform'],
+    warning: 'Kafka sin autenticación/autorización permite leer y escribir en todos los topics.',
+    posture: 'internal', malware: false, exfil: false,
+  },
+
+  // ── SAP ────────────────────────────────────────────────────────
+  3200: {
+    name: 'SAP GUI', proto: ['TCP'], category: 'erp',
+    security: 'warning',
+    description: 'SAP GUI connection dispatcher.',
+    apps: ['SAP GUI', 'SAP NetWeaver'],
+    warning: 'SAP expuesto a internet sin VPN es un riesgo crítico para datos financieros y de negocio.',
+    posture: 'internal', malware: false, exfil: true,
+  },
+  8000: {
+    name: 'SAP ICM HTTP / misc', proto: ['TCP'], category: 'web',
+    security: 'warning',
+    description: 'SAP ICM HTTP o servidor de desarrollo genérico.',
+    apps: ['SAP ICM', 'servidores de desarrollo'],
+    warning: 'Si es SAP ICM, no debe estar expuesto sin autenticación fuerte.',
+    posture: 'restrict', malware: false, exfil: false,
+  },
+
+  // ── Misc ───────────────────────────────────────────────────────
+  179: {
+    name: 'BGP', proto: ['TCP'], category: 'routing',
+    security: 'info',
+    description: 'Border Gateway Protocol — enrutamiento entre sistemas autónomos.',
+    apps: ['Cisco IOS', 'Quagga', 'BIRD', 'routers de borde'],
+    posture: 'restrict', malware: false, exfil: false,
+    note: 'BGP hijacking es una amenaza real. Solo debe estar activo en routers de borde con peers conocidos.',
+  },
+  69: {
+    name: 'TFTP', proto: ['UDP'], category: 'file-transfer',
+    security: 'danger',
+    description: 'Trivial File Transfer Protocol — sin autenticación ni cifrado.',
+    apps: ['PXE boot', 'configuración de dispositivos de red', 'routers/switches'],
+    warning: 'TFTP no tiene autenticación. Cualquiera puede leer o escribir archivos si está expuesto.',
+    posture: 'internal', malware: false, exfil: true,
+  },
+  111: {
+    name: 'RPC / Portmapper', proto: ['TCP', 'UDP'], category: 'infrastructure',
+    security: 'danger',
+    description: 'ONC RPC portmapper — registra servicios RPC.',
+    apps: ['NFS', 'NIS', 'servicios Unix legacy'],
+    warning: 'Historial de vulnerabilidades críticas. Nunca exponer a internet.',
+    posture: 'block', malware: false, exfil: false,
+  },
+  2049: {
+    name: 'NFS', proto: ['TCP', 'UDP'], category: 'file-transfer',
+    security: 'danger',
+    description: 'Network File System — compartición de archivos Unix/Linux.',
+    apps: ['nfsd', 'NFS client'],
+    warning: 'NFS expuesto a internet permite montar filesystems remotos. Nunca exponer al exterior.',
+    posture: 'internal', malware: false, exfil: true,
+  },
+  8888: {
+    name: 'Jupyter / misc', proto: ['TCP'], category: 'web',
+    security: 'warning',
+    description: 'Jupyter Notebook (por defecto) u otras aplicaciones.',
+    apps: ['Jupyter Notebook', 'Jupyter Lab', 'apps custom'],
+    warning: 'Jupyter Notebook expuesto sin contraseña permite ejecución de código arbitrario en el servidor.',
+    posture: 'restrict', malware: false, exfil: false,
+  },
+  9000: {
+    name: 'SonarQube / PHP-FPM / misc', proto: ['TCP'], category: 'web',
+    security: 'info',
+    description: 'Usado por SonarQube, PHP-FPM y varias aplicaciones.',
+    apps: ['SonarQube', 'PHP-FPM', 'Portainer'],
+    posture: 'restrict', malware: false, exfil: false,
+  },
+};
+
+module.exports = PORTS;

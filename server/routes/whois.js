@@ -1,10 +1,7 @@
 const express = require('express');
 const router  = express.Router();
 const whois   = require('../services/whois');
-
-function isValidDomain(d) {
-  return /^([a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/.test(d);
-}
+const { isValidDomain } = require('../utils/validators');
 
 router.post('/lookup', async (req, res) => {
   const { domains = [] } = req.body;

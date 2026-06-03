@@ -38,7 +38,7 @@ async function checkDomain(domain) {
   try {
     const { data } = await axios.get(
       `${BASE}/domains/${encodeURIComponent(domain)}`,
-      { headers: headers() }
+      { headers: headers(), timeout: 10000 }
     );
     const attr  = data.data.attributes;
     const stats = parseStats(attr.last_analysis_stats);
@@ -66,7 +66,7 @@ async function checkIP(ip) {
   try {
     const { data } = await axios.get(
       `${BASE}/ip_addresses/${encodeURIComponent(ip)}`,
-      { headers: headers() }
+      { headers: headers(), timeout: 10000 }
     );
     const attr  = data.data.attributes;
     const stats = parseStats(attr.last_analysis_stats);
@@ -93,7 +93,7 @@ async function checkHash(hash) {
   try {
     const { data } = await axios.get(
       `${BASE}/files/${encodeURIComponent(hash)}`,
-      { headers: headers() }
+      { headers: headers(), timeout: 10000 }
     );
     const attr  = data.data.attributes;
     const stats = parseStats(attr.last_analysis_stats);

@@ -4,7 +4,7 @@ const axios = require('axios');
 const BASE = 'https://threatfox-api.abuse.ch/api/v1/';
 
 function headers() {
-   return process.env.THREATFOX_API_KEY
+  return process.env.THREATFOX_API_KEY
     ? { 'Content-Type': 'application/json', 'Auth-Key': process.env.THREATFOX_API_KEY }
     : { 'Content-Type': 'application/json' };
 }

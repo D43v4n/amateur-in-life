@@ -3,10 +3,7 @@ const router    = express.Router();
 const vt        = require('../services/virustotal');
 const shodan    = require('../services/shodan');
 const threatfox = require('../services/threatfox');
-
-function isValidDomain(d) {
-  return /^([a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/.test(d);
-}
+const { isValidDomain } = require('../utils/validators');
 
 // ── Veredicto consolidado ──────────────────────────────────────
 // VT es fuente primaria con umbral de engines.
@@ -78,7 +75,7 @@ router.post('/check', async (req, res) => {
       engines_suspicious:vtData?.suspicious ?? null,
       engines_total:    vtData?.total ?? null,
       community_score:  vtData?.reputation ?? null,
-      country:          shData?.country || vtData?.country || null,
+      country:          shData?.country || null,
       org:              shData?.org || null,
       ports:            shData?.ports     || [],
       vulns:            shData?.vulns     || [],
