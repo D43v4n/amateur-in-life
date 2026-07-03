@@ -113,6 +113,32 @@
   .port-flag-exfil{background:rgba(167,139,250,.1);color:#a78bfa;border:1px solid rgba(167,139,250,.2)}
   .posture-badge{font-size:10px;padding:2px 8px;border-radius:3px;font-weight:500}
   .posture-block{background:rgba(239,68,68,.1);color:var(--red)}.posture-restrict{background:rgba(245,158,11,.1);color:var(--yellow)}.posture-internal{background:rgba(6,182,212,.1);color:var(--cyan)}.posture-standard{background:rgba(34,197,94,.1);color:var(--green)}
+  .section-title{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--accent2);margin-bottom:10px;font-weight:600}
+  /* ── Email Headers ─────────────────────────────────────────── */
+  .hop-chain{display:flex;flex-direction:column}
+  .hop-item{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--border)}
+  .hop-item:last-child{border-bottom:none}
+  .hop-num{width:22px;height:22px;border-radius:50%;background:var(--bg3);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--text3);flex-shrink:0;margin-top:2px}
+  .hop-content{flex:1;min-width:0}
+  .hop-from{font-size:11px;color:var(--text);word-break:break-all}
+  .hop-by{font-size:10px;color:var(--text3);margin-top:2px}
+  .hop-ip{font-size:10px;color:var(--cyan);margin-top:3px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .hop-delay{font-size:9px;padding:1px 7px;border-radius:3px;background:var(--bg3);color:var(--text3);border:1px solid var(--border);white-space:nowrap;flex-shrink:0}
+  .hop-delay.delay-warn{background:rgba(245,158,11,.1);color:var(--yellow);border-color:rgba(245,158,11,.3)}
+  .auth-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+  .auth-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:4px 12px;border-radius:5px;font-weight:500}
+  .auth-pass{background:rgba(34,197,94,.1);color:var(--green);border:1px solid rgba(34,197,94,.3)}
+  .auth-fail{background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.3)}
+  .auth-warn{background:rgba(245,158,11,.1);color:var(--yellow);border:1px solid rgba(245,158,11,.3)}
+  .auth-none{background:var(--bg3);color:var(--text3);border:1px solid var(--border)}
+  .redflag-list{display:flex;flex-direction:column;gap:6px}
+  .redflag{display:flex;align-items:flex-start;gap:7px;font-size:11px;color:var(--yellow);background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.2);border-radius:6px;padding:8px 10px;line-height:1.5}
+  .redflag.critical{color:var(--red);background:rgba(239,68,68,.07);border-color:rgba(239,68,68,.2)}
+  /* ── urlscan.io ─────────────────────────────────────────────── */
+  .urlscan-layout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px;align-items:start}
+  @media(max-width:820px){.urlscan-layout{grid-template-columns:1fr}}
+  .urlscan-screenshot{width:100%;border-radius:8px;border:1px solid var(--border);display:block;cursor:pointer}
+  .urlscan-score{font-family:var(--font-sans);font-size:44px;font-weight:800;line-height:1}
 </style>
 </head>
 <body>
@@ -131,7 +157,9 @@
       <div class="nav-item" onclick="showPanel('whois')"  id="nav-whois"><span class="ico">🔎</span> WHOIS</div>
       <div class="nav-item" onclick="showPanel('hash')"   id="nav-hash"><span class="ico">🔐</span> Hashes</div>
       <div class="nav-item" onclick="showPanel('ip')"     id="nav-ip"><span class="ico">📡</span> Direcciones IP</div>
-      <div class="nav-item" onclick="showPanel('ports')"  id="nav-ports"><span class="ico">🔌</span> Puertos</div>
+      <div class="nav-item" onclick="showPanel('ports')"   id="nav-ports"><span class="ico">🔌</span> Puertos</div>
+      <div class="nav-item" onclick="showPanel('email')"   id="nav-email"><span class="ico">📧</span> Email Headers</div>
+      <div class="nav-item" onclick="showPanel('urlscan')" id="nav-urlscan"><span class="ico">🔗</span> URL Scan</div>
     </div>
     <div class="nav-section" style="margin-top:8px">
       <div class="nav-label">Sesión</div>
@@ -141,7 +169,7 @@
       <div class="nav-label">Config</div>
       <div class="nav-item" onclick="showPanel('config')" id="nav-config"><span class="ico">⚙️</span> API Keys</div>
     </div>
-    <div class="sidebar-footer">EZWatch v1.0 · Blue Team<br><span style="color:var(--text3)">VT · Shodan · ThreatFox · AbuseIPDB · WHOIS</span></div>
+    <div class="sidebar-footer">EZWatch v1.0 · Blue Team<br><span style="color:var(--text3)">VT · Shodan · ThreatFox · AbuseIPDB · urlscan.io</span></div>
   </nav>
   <main class="main">
 
@@ -243,6 +271,41 @@
           <button class="btn btn-ghost" onclick="loadSample('ports')">Ejemplo</button>
         </div>
         <div id="ports-results" class="results-wrap"></div>
+      </div>
+    </div>
+
+    <!-- EMAIL HEADERS -->
+    <div class="panel" id="panel-email">
+      <div class="panel-header">
+        <div><div class="panel-title">📧 Analizador de Email Headers</div><div class="panel-subtitle">SPF · DKIM · DMARC · Cadena de enrutamiento · Reputación de IPs</div></div>
+        <button class="btn btn-ghost" onclick="clearPanel('email')">Limpiar</button>
+      </div>
+      <div class="panel-body">
+        <label>Pega los headers crudos del email</label>
+        <textarea id="email-input" placeholder="Received: from mail.example.com ([203.0.113.5])&#10;  by mx.google.com with ESMTP&#10;Authentication-Results: mx.google.com;&#10;  spf=pass (google.com: domain of sender@example.com)&#10;  dkim=pass header.i=@example.com&#10;From: sender@example.com&#10;To: recipient@company.com&#10;Subject: Test message" style="min-height:160px;font-size:11px"></textarea>
+        <div class="hint">Los headers se procesan localmente · Las IPs públicas se verifican contra fuentes OSINT</div>
+        <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-primary" id="btn-email" onclick="analyzeEmail()">🔍 Analizar</button>
+          <button class="btn btn-ghost" onclick="loadEmailSample()">Cargar ejemplo</button>
+        </div>
+        <div id="email-results" class="results-wrap"></div>
+      </div>
+    </div>
+
+    <!-- URL SCAN -->
+    <div class="panel" id="panel-urlscan">
+      <div class="panel-header">
+        <div><div class="panel-title">🔗 URL Scan</div><div class="panel-subtitle">urlscan.io · Captura de pantalla segura · Detección de phishing · Recursos contactados</div></div>
+        <button class="btn btn-ghost" onclick="clearPanel('urlscan')">Limpiar</button>
+      </div>
+      <div class="panel-body">
+        <label>URL a escanear</label>
+        <div class="input-row">
+          <input type="text" id="urlscan-input" placeholder="https://sitio-sospechoso.com/pagina" style="font-family:var(--font-mono);font-size:12px;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:7px;padding:10px 14px;flex:1;outline:none">
+          <button class="btn btn-primary" id="btn-urlscan" onclick="analyzeURLScan()" style="flex-shrink:0">🔍 Escanear</button>
+        </div>
+        <div class="hint">El escaneo toma ~15-30 segundos · Los resultados son públicos en urlscan.io · Requiere URLSCAN_API_KEY</div>
+        <div id="urlscan-results" class="results-wrap"></div>
       </div>
     </div>
 
@@ -582,6 +645,243 @@ function renderIP(results,container){
     html+=`<tr><td class="cell-mono">${r.ip}${errBadge}${torBadge}${hosts}${tags?`<div style="margin-top:3px">${tags}</div>`:''}</td><td>${verdictBadge(r.verdict)}${s.threatfox_family?`<div style="font-size:10px;color:var(--red);margin-top:3px">🦠 ${s.threatfox_family}</div>`:''}${abuseBadge}</td><td>${score}${enginesDetailInline(r.engines_detail)}</td><td>${communityScore(s.community_score)}</td><td class="cell-dim">${s.country||'—'}<br>${s.isp||s.org||'—'}<br><span style="color:var(--text3)">${s.asn||''}</span></td><td>${ports}${cpes}</td><td>${vulns}</td><td>${sourceChips(r.sources,r.errors)}</td></tr>`;
   }
   html+='</tbody></table>';container.innerHTML=html;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// EMAIL HEADERS
+// ═══════════════════════════════════════════════════════════════
+function isPublicIPFE(ip){
+  if(!/^(\d{1,3}\.){3}\d{1,3}$/.test(ip))return false;
+  const[a,b]=ip.split('.').map(Number);
+  if(a===10||a===127)return false;
+  if(a===172&&b>=16&&b<=31)return false;
+  if(a===192&&b===168)return false;
+  return true;
+}
+
+function parseEmailHeaders(raw){
+  const text=raw.replace(/\r\n/g,'\n').replace(/\n[ \t]+/g,' ');
+  const lines=text.split('\n');
+  const all={};const received=[];
+  for(const line of lines){
+    if(!line.trim())break;
+    const m=line.match(/^([\w-]+):\s*(.*)/i);
+    if(!m)continue;
+    const[,name,value]=m;
+    const k=name.toLowerCase();
+    if(k==='received')received.push(value.trim());
+    else if(!all[k])all[k]=value.trim();
+  }
+  // reverse → cronológico (primer salto primero)
+  const hops=received.reverse().map((r,i)=>{
+    const ip=(r.match(/\[(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\]/)||[])[1]||null;
+    const from=(r.match(/from\s+(\S+)/i)||[])[1]||null;
+    const by=(r.match(/by\s+(\S+)/i)||[])[1]||null;
+    const dateStr=(r.match(/;\s*(.+)$/)|| [])[1]||null;
+    const date=dateStr?new Date(dateStr):null;
+    return{index:i+1,ip,from,by,date:date&&!isNaN(date)?date:null};
+  });
+  for(let i=1;i<hops.length;i++){
+    if(hops[i].date&&hops[i-1].date)hops[i].delayMs=hops[i].date-hops[i-1].date;
+  }
+  const authH=all['authentication-results']||'';
+  const spf=(all['received-spf']||'').match(/^(\w+)/i)?.[1]||authH.match(/spf=([\w]+)/i)?.[1]||null;
+  const dkim=authH.match(/dkim=([\w]+)/i)?.[1]||null;
+  const dmarc=authH.match(/dmarc=([\w]+)/i)?.[1]||null;
+  const fromAddr=all['from']||'';
+  const fromDomain=(fromAddr.match(/@([\w.-]+)/)||[])[1]?.toLowerCase();
+  const replyTo=all['reply-to']||'';
+  const replyToDomain=(replyTo.match(/@([\w.-]+)/)||[])[1]?.toLowerCase();
+  const returnPath=all['return-path']||'';
+  const returnPathDomain=(returnPath.match(/@([\w.-]+)/)||[])[1]?.toLowerCase();
+  const redFlags=[];
+  if(spf&&spf.toLowerCase()!=='pass')
+    redFlags.push({msg:`SPF ${spf.toUpperCase()} — el servidor remitente no está autorizado para el dominio`,critical:spf.toLowerCase()==='fail'});
+  if(dkim&&dkim.toLowerCase()!=='pass')
+    redFlags.push({msg:`DKIM ${dkim.toUpperCase()} — la firma digital del email es inválida o ausente`,critical:dkim.toLowerCase()==='fail'});
+  if(dmarc&&dmarc.toLowerCase()!=='pass')
+    redFlags.push({msg:`DMARC ${dmarc.toUpperCase()} — el mensaje no pasó la política de autenticación DMARC`,critical:dmarc.toLowerCase()==='fail'});
+  if(replyToDomain&&fromDomain&&replyToDomain!==fromDomain)
+    redFlags.push({msg:`Reply-To (${replyToDomain}) difiere del dominio From (${fromDomain}) — las respuestas se redirigen a un dominio distinto`,critical:true});
+  if(returnPathDomain&&fromDomain&&returnPathDomain!==fromDomain)
+    redFlags.push({msg:`Return-Path (${returnPathDomain}) difiere del dominio From (${fromDomain})`,critical:false});
+  const publicIPs=[...new Set(hops.map(h=>h.ip).filter(ip=>ip&&isPublicIPFE(ip)))];
+  return{from:fromAddr,replyTo:replyTo||null,returnPath:returnPath||null,
+    subject:all['subject']||null,date:all['date']||null,messageId:all['message-id']||null,
+    xOriginatingIP:all['x-originating-ip']||null,xMailer:all['x-mailer']||all['x-originating-client']||null,
+    hops,auth:{spf,dkim,dmarc},redFlags,publicIPs};
+}
+
+async function analyzeEmail(){
+  const raw=document.getElementById('email-input')?.value||'';
+  if(!raw.trim()){alert('Pega los headers del email.');return}
+  const btn=document.getElementById('btn-email');
+  const container=document.getElementById('email-results');
+  btn.disabled=true;btn.innerHTML='<div class="spinner"></div> Analizando…';
+  container.innerHTML='<div class="loading-row"><div class="spinner"></div> Procesando headers…</div>';
+  try{
+    const parsed=parseEmailHeaders(raw);
+    let ipData=null;
+    if(parsed.publicIPs.length>0){
+      container.innerHTML='<div class="loading-row"><div class="spinner"></div> Verificando IPs en fuentes OSINT…</div>';
+      try{
+        const res=await fetch('/api/ip/check',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ips:parsed.publicIPs.slice(0,10)})});
+        if(res.ok)ipData=(await res.json()).results;
+      }catch{}
+    }
+    renderEmail(parsed,ipData,container);
+  }catch(err){
+    container.innerHTML=`<div style="padding:16px;color:var(--red);font-size:12px">❌ Error: ${err.message}</div>`;
+  }finally{btn.disabled=false;btn.innerHTML='🔍 Analizar'}
+}
+
+function loadEmailSample(){
+  document.getElementById('email-input').value=
+`Received: from mail.phishing-example.net (mail.phishing-example.net [203.0.113.42])
+        by mx.company.com with ESMTP id x1234
+        for <user@company.com>; Mon, 2 Jun 2025 10:15:32 -0600
+Received: from localhost ([127.0.0.1])
+        by mail.phishing-example.net with SMTP id abc123
+        ; Mon, 2 Jun 2025 10:14:55 -0600
+Authentication-Results: mx.company.com;
+       spf=softfail (company.com: 203.0.113.42 is not permitted sender) smtp.mailfrom=noreply@paypal.com;
+       dkim=fail (bad signature) header.i=@paypal.com;
+       dmarc=fail action=none header.from=paypal.com
+Received-SPF: softfail (203.0.113.42 is not permitted sender for paypal.com)
+From: PayPal Security <noreply@paypal.com>
+Reply-To: support@paypal-help.phishing-example.net
+Return-Path: <bounce@phishing-example.net>
+To: user@company.com
+Subject: =?UTF-8?B?QWN0aW9uIFJlcXVpcmVkOiBWZXJpZnkgeW91ciBhY2NvdW50?=
+Date: Mon, 2 Jun 2025 10:14:50 -0600
+Message-ID: <fake123456@phishing-example.net>
+X-Mailer: The Bat! 9.3`
+}
+
+function renderEmail(p,ipData,container){
+  const aC=v=>{if(!v)return'auth-none';const l=v.toLowerCase();return l==='pass'?'auth-pass':l==='fail'?'auth-fail':'auth-warn'};
+  const aI=v=>{if(!v)return'—';const l=v.toLowerCase();return l==='pass'?'✔':l==='fail'?'✖':'⚠'};
+  const ipMap={};(ipData||[]).forEach(r=>ipMap[r.ip]=r);
+  const criticals=p.redFlags.filter(f=>f.critical).length;
+  let html=`<div class="summary-row">
+    <div class="summary-card"><div class="val ${p.redFlags.length>0?(criticals>0?'val-red':'val-yellow'):'val-green'}">${p.redFlags.length}</div><div class="lbl">ALERTAS</div></div>
+    <div class="summary-card"><div class="val val-blue">${p.hops.length}</div><div class="lbl">SALTOS</div></div>
+    <div class="summary-card"><div class="val val-blue">${p.publicIPs.length}</div><div class="lbl">IPs PÚBLICAS</div></div>
+  </div>`;
+  // Auth
+  html+=`<div style="margin-bottom:16px"><div class="section-title">Autenticación</div><div class="auth-row">
+    <span class="auth-badge ${aC(p.auth.spf)}">${aI(p.auth.spf)} SPF${p.auth.spf?' · '+p.auth.spf.toUpperCase():' · No detectado'}</span>
+    <span class="auth-badge ${aC(p.auth.dkim)}">${aI(p.auth.dkim)} DKIM${p.auth.dkim?' · '+p.auth.dkim.toUpperCase():' · No detectado'}</span>
+    <span class="auth-badge ${aC(p.auth.dmarc)}">${aI(p.auth.dmarc)} DMARC${p.auth.dmarc?' · '+p.auth.dmarc.toUpperCase():' · No detectado'}</span>
+  </div></div>`;
+  // Red flags
+  if(p.redFlags.length>0){
+    html+=`<div style="margin-bottom:16px"><div class="section-title">Alertas detectadas</div><div class="redflag-list">`;
+    for(const f of p.redFlags)html+=`<div class="redflag ${f.critical?'critical':''}">${f.critical?'🚨':'⚠'} ${f.msg}</div>`;
+    html+=`</div></div>`;
+  }
+  // Metadata
+  html+=`<div style="margin-bottom:16px"><div class="section-title">Metadatos del Mensaje</div><div class="whois-grid"><div class="whois-card">
+    ${field('De',p.from)}
+    ${p.replyTo?field('Reply-To',`<span style="color:${p.replyTo!==p.from?'var(--yellow)':'inherit'}">${p.replyTo}</span>`):''}
+    ${p.returnPath?field('Return-Path',p.returnPath):''}
+    ${field('Asunto',p.subject)}
+    ${field('Fecha',p.date)}
+    ${p.messageId?field('Message-ID',`<span style="word-break:break-all;font-size:10px">${p.messageId}</span>`):''}
+    ${p.xOriginatingIP?field('X-Originating-IP',`<span style="color:var(--cyan)">${p.xOriginatingIP}</span>`):''}
+    ${p.xMailer?field('X-Mailer',p.xMailer):''}
+  </div></div></div>`;
+  // Hop chain
+  html+=`<div style="margin-bottom:16px"><div class="section-title">Cadena de Enrutamiento · ${p.hops.length} saltos</div><div class="hop-chain" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:4px 14px">`;
+  for(const h of p.hops){
+    const dm=h.delayMs!=null?Math.round(h.delayMs/60000):null;
+    const dl=dm!=null?(dm>=60?Math.floor(dm/60)+'h ':'')+((dm%60)||'<1')+'min':'';
+    const warn=dm!=null&&dm>10;
+    const ipR=h.ip?ipMap[h.ip]:null;
+    const ipColor=ipR?(ipR.verdict==='malicious'?'var(--red)':ipR.verdict==='suspect'?'var(--yellow)':'var(--green)'):'var(--cyan)';
+    html+=`<div class="hop-item">
+      <div class="hop-num">${h.index}</div>
+      <div class="hop-content">
+        <div class="hop-from">${h.from||'origen desconocido'}</div>
+        ${h.by?`<div class="hop-by">→ recibido por ${h.by}</div>`:''}
+        ${h.ip?`<div class="hop-ip"><span style="color:${ipColor}">IP: ${h.ip}</span>${ipR?verdictBadge(ipR.verdict):''}</div>`:''}
+        ${h.date?`<div style="font-size:9px;color:var(--text3);margin-top:2px">${h.date.toUTCString()}</div>`:''}
+      </div>
+      ${dl?`<span class="hop-delay ${warn?'delay-warn':''}">${warn?'⚠ ':'+'}${dl}</span>`:''}
+    </div>`;
+  }
+  html+=`</div></div>`;
+  // IP reputation table
+  if(ipData&&ipData.length>0){
+    html+=`<div><div class="section-title">Reputación de IPs encontradas</div>
+    <table><thead><tr><th>IP</th><th>Veredicto</th><th>País / Org</th><th>Links</th></tr></thead><tbody>`;
+    for(const r of ipData){const s=r.summary;
+      html+=`<tr><td class="cell-mono">${r.ip}</td><td>${verdictBadge(r.verdict)}</td>
+        <td class="cell-dim">${s.country||'—'}<br>${s.org||s.isp||'—'}</td>
+        <td>${sourceChips(r.sources,r.errors)}</td></tr>`;
+    }
+    html+=`</tbody></table></div>`;
+  }
+  container.innerHTML=html;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// URL SCAN
+// ═══════════════════════════════════════════════════════════════
+async function analyzeURLScan(){
+  let url=document.getElementById('urlscan-input')?.value?.trim()||'';
+  if(!url){alert('Ingresa una URL.');return}
+  if(!/^https?:\/\//i.test(url))url='https://'+url;
+  try{new URL(url)}catch{alert('URL inválida.');return}
+  const btn=document.getElementById('btn-urlscan');
+  const container=document.getElementById('urlscan-results');
+  btn.disabled=true;btn.innerHTML='<div class="spinner"></div> Escaneando…';
+  container.innerHTML='<div class="loading-row"><div class="spinner"></div> Enviando a urlscan.io · El escaneo tarda ~15-30 segundos…</div>';
+  try{
+    const res=await fetch('/api/urlscan/scan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url})});
+    const data=await res.json();
+    if(!res.ok)throw new Error(data.error||'Error '+res.status);
+    renderURLScan(data,container);
+  }catch(err){
+    container.innerHTML=`<div style="padding:16px;color:var(--red);font-size:12px">❌ ${err.message}<br><span style="color:var(--text3);font-size:11px">Verifica que URLSCAN_API_KEY esté configurada en .env</span></div>`;
+  }finally{btn.disabled=false;btn.innerHTML='🔍 Escanear'}
+}
+
+function renderURLScan(d,container){
+  const sc=d.score>=70?'var(--red)':d.score>=30?'var(--yellow)':'var(--green)';
+  const v=d.malicious?'malicious':d.score>=30?'suspect':'clean';
+  let html=`<div class="urlscan-layout"><div>
+    <div class="summary-row">
+      <div class="summary-card"><div class="urlscan-score" style="color:${sc}">${d.score}</div><div class="lbl">SCORE (0-100)</div></div>
+      <div class="summary-card"><div style="padding-top:6px">${verdictBadge(v)}</div><div class="lbl">VEREDICTO</div></div>
+      <div class="summary-card"><div class="val val-blue">${d.requests}</div><div class="lbl">REQUESTS</div></div>
+      <div class="summary-card"><div class="val val-blue">${d.uniqDomains}</div><div class="lbl">DOMINIOS</div></div>
+    </div>
+    ${d.brands.length?`<div class="redflag critical" style="margin-bottom:12px">🚨 Posible suplantación de marca: <strong>${d.brands.join(', ')}</strong></div>`:''}
+    <div class="whois-card" style="margin-bottom:12px"><div class="whois-card-title">📄 Información de la Página</div>
+      ${field('URL final',`<a href="${d.page.url}" target="_blank" rel="noopener" style="color:var(--accent2);word-break:break-all">${d.page.url||'—'}</a>`)}
+      ${field('Dominio',d.page.domain)}
+      ${field('IP del servidor',d.page.ip?`<span style="color:var(--cyan)">${d.page.ip}</span>`:'—')}
+      ${field('País',d.page.country)}
+      ${field('Servidor',d.page.server)}
+      ${d.categories.length?field('Categorías',d.categories.join(', ')):''}
+      ${field('Fecha de escaneo',d.scanTime?new Date(d.scanTime).toLocaleString():'—')}
+    </div>`;
+  if(d.ips.length||d.domains.length){
+    html+=`<div class="whois-card" style="margin-bottom:12px"><div class="whois-card-title">🌐 Recursos Contactados</div>`;
+    if(d.ips.length)html+=`<div class="whois-field"><div class="whois-key">IPs (${d.uniqIPs})</div><div class="whois-val" style="flex-wrap:wrap;display:flex;gap:4px">${d.ips.slice(0,12).map(ip=>`<span class="tag">${ip}</span>`).join('')}</div></div>`;
+    if(d.domains.length)html+=`<div class="whois-field"><div class="whois-key">Dominios</div><div class="whois-val" style="flex-wrap:wrap;display:flex;gap:4px">${d.domains.slice(0,12).map(dm=>`<span class="tag">${dm}</span>`).join('')}</div></div>`;
+    html+=`</div>`;
+  }
+  html+=`<a href="${d.resultLink}" target="_blank" rel="noopener" class="btn btn-ghost" style="display:inline-flex;align-items:center;gap:6px;font-size:12px;text-decoration:none">🔗 Ver reporte completo en urlscan.io</a>
+  </div>
+  <div>
+    <div class="section-title" style="margin-bottom:8px">Captura de pantalla</div>
+    <a href="${d.resultLink}" target="_blank" rel="noopener">
+      <img src="${d.screenshot}" alt="Screenshot" class="urlscan-screenshot" onerror="this.parentElement.innerHTML='<div style=\\'padding:40px;text-align:center;color:var(--text3);font-size:11px;background:var(--bg3);border-radius:8px;border:1px solid var(--border)\\'>Captura no disponible aún.<br>Abre el reporte en urlscan.io</div>'">
+    </a>
+  </div></div>`;
+  container.innerHTML=html;
 }
 </script>
 </body>

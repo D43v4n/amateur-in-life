@@ -8,7 +8,8 @@ const domainRoutes = require('./routes/domain');
 const ipRoutes     = require('./routes/ip');
 const hashRoutes   = require('./routes/hash');
 const whoisRoutes  = require('./routes/whois');
-const portsRoutes  = require('./routes/ports');
+const portsRoutes   = require('./routes/ports');
+const urlscanRoutes = require('./routes/urlscan');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -30,7 +31,8 @@ app.use('/api/domain', domainRoutes);
 app.use('/api/ip',     ipRoutes);
 app.use('/api/hash',   hashRoutes);
 app.use('/api/whois',  whoisRoutes);
-app.use('/api/ports',  portsRoutes);
+app.use('/api/ports',   portsRoutes);
+app.use('/api/urlscan', urlscanRoutes);
 
 // Estado del servidor + keys configuradas
 app.get('/api/status', (req, res) => {
@@ -41,6 +43,7 @@ app.get('/api/status', (req, res) => {
       shodan:     !!process.env.SHODAN_API_KEY,
       abuseipdb:  !!process.env.ABUSEIPDB_API_KEY,
       threatfox:  true,
+      urlscan:    !!process.env.URLSCAN_API_KEY,
     }
   });
 });
