@@ -34,6 +34,26 @@ function parseIOC(ioc) {
   };
 }
 
+// Verifica que el IOC corresponde exactamente al dominio buscado
+// o a un subdominio suyo. Evita falsos positivos por substring match
+// de la API (ej. buscar "with.agency" devuelve IOCs con ".agency").
+function iocMatchesDomain(searchDomain, iocValue, iocType) {
+  const sd  = searchDomain.toLowerCase();
+  const val = iocValue.toLowerCase();
+  if (iocType === 'domain') {
+    return val === sd || val.endsWith('.' + sd);
+  }
+  if (iocType === 'url') {
+    try {
+      const host = new URL(val.startsWith('http') ? val : 'https://' + val).hostname;
+      return host === sd || host.endsWith('.' + sd);
+    } catch {
+      return val.includes('://' + sd + '/') || val.includes('://' + sd + ':') || val.endsWith('://' + sd);
+    }
+  }
+  return val === sd;
+}
+
 function buildResult(identifier, field, data) {
   if (data.query_status === 'no_result') {
     return { source: 'ThreatFox', [field]: identifier, verdict: 'clean', matches: [] };
@@ -41,10 +61,16 @@ function buildResult(identifier, field, data) {
   if (data.query_status === 'no_auth') {
     return { source: 'ThreatFox', [field]: identifier, error: 'Auth-Key inválida o faltante' };
   }
-  const matches = (data.data || []).map(parseIOC);
-  // Confidence >= 75 → malicious, menor → suspect
-  const maxConf  = Math.max(...matches.map(m => m.confidence || 0), 0);
-  const verdict  = matches.length === 0 ? 'clean'
+  let matches = (data.data || []).map(parseIOC);
+
+  // Para dominios: descartar IOCs que no correspondan exactamente
+  // al dominio o a un subdominio suyo (la API hace substring match).
+  if (field === 'domain') {
+    matches = matches.filter(m => iocMatchesDomain(identifier, m.value, m.type));
+  }
+
+  const maxConf = Math.max(...matches.map(m => m.confidence || 0), 0);
+  const verdict = matches.length === 0 ? 'clean'
     : maxConf >= 75 ? 'malicious' : 'suspect';
   return { source: 'ThreatFox', [field]: identifier, verdict, matches };
 }
