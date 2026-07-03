@@ -15,15 +15,18 @@ async function checkIPInternetDB(ip) {
   try {
     const { data } = await axios.get(`${INTERNETDB}/${ip}`, { httpsAgent: agent, timeout: 5000 });
     const vulns = data.vulns || [];
+    const tags  = data.tags  || [];
+    const DANGER_TAGS = new Set(['malware', 'botnet', 'c2', 'compromised']);
+    const hasDangerTag = tags.some(t => DANGER_TAGS.has(t.toLowerCase()));
     return {
       source:    'Shodan',
       ip,
-      verdict:   vulns.length > 0 ? 'suspect' : 'unknown',
+      verdict:   hasDangerTag ? 'suspect' : 'unknown',
       ports:     data.ports     || [],
       hostnames: data.hostnames || [],
       cpes:      data.cpes      || [],
       vulns,
-      tags:      data.tags      || [],
+      tags,
     };
   } catch (err) {
     if (err.response?.status === 404)
@@ -52,6 +55,9 @@ async function checkIP(ip) {
   const hostnames = full.hostnames || idb?.hostnames || [];
   const cpes      = idb?.cpes || [];
 
+  const DANGER_TAGS = new Set(['malware', 'botnet', 'c2', 'compromised']);
+  const hasDangerTag = tags.some(t => DANGER_TAGS.has(t.toLowerCase()));
+
   const services = (full.data || []).slice(0, 10).map(s => ({
     port:    s.port,
     proto:   s.transport,
@@ -62,7 +68,7 @@ async function checkIP(ip) {
   return {
     source:      'Shodan',
     ip,
-    verdict:     vulns.length > 0 ? 'suspect' : 'unknown',
+    verdict:     hasDangerTag ? 'suspect' : 'unknown',
     country:     full.country_name || '—',
     countryCode: full.country_code || '—',
     city:        full.city         || '—',
@@ -96,7 +102,7 @@ async function checkDomain(domain) {
       }
     }
 
-    if (!ip) return { source: 'Shodan', domain, error: 'No se pudo resolver el dominio' };
+    if (!ip) return { source: 'Shodan', domain, verdict: 'unknown', ports: [], hostnames: [], cpes: [], vulns: [], tags: [] };
 
     const result = await checkIP(ip);
     return { ...result, domain, resolvedIP: ip };

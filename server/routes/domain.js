@@ -34,9 +34,14 @@ function consolidateVerdict(vtData, shData, tfData) {
     else if (maxConf >  0  && (verdict === 'clean' || verdict === 'unknown')) verdict = 'suspect';
   }
 
-  // ── 3. Shodan escala si hay CVEs conocidos ─────────────────
-  if (hasSH && shData.vulns?.length > 0 && verdict === 'clean') {
-    verdict = 'suspect';
+  // ── 3. Shodan escala solo por tags de malware/botnet ─────────
+  // CVEs en el IP resuelto indican vulnerabilidad, no compromiso activo.
+  // Solo tags como 'malware'/'botnet' son señal de actividad maliciosa real.
+  if (hasSH) {
+    const DANGER_TAGS = new Set(['malware', 'botnet', 'c2', 'compromised']);
+    if (shData.tags?.some(t => DANGER_TAGS.has(t.toLowerCase())) && verdict !== 'malicious') {
+      if (verdict === 'clean' || verdict === 'unknown') verdict = 'suspect';
+    }
   }
 
   return verdict;
@@ -87,8 +92,10 @@ router.post('/check', async (req, res) => {
     const sources = [
       vtData ? { source: 'VirusTotal', found: !vtData.error, verdict: vtData.verdict,
         link: `https://www.virustotal.com/gui/domain/${domain}` } : null,
-      shData ? { source: 'Shodan', found: !shData.error, verdict: shData.verdict,
-        link: `https://www.shodan.io/search?query=${domain}` } : null,
+      shData ? { source: 'Shodan',
+        found: !shData.error && !!(shData.ports?.length || shData.vulns?.length || shData.hostnames?.length || shData.cpes?.length),
+        verdict: shData.verdict,
+        link: `https://www.shodan.io/search?query=hostname%3A${domain}` } : null,
       tfData ? { source: 'ThreatFox', found: (tfData.matches?.length > 0), verdict: tfData.verdict,
         link: `https://threatfox.abuse.ch/browse.php?search=ioc%3A${domain}` } : null,
     ].filter(Boolean);

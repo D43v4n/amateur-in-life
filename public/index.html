@@ -319,11 +319,12 @@ function sourceChips(sources,errors){
     malicious:['var(--red)',   '✖'],
     suspect:  ['var(--yellow)','⚠'],
     clean:    ['var(--green)', '✔'],
+    found:    ['var(--accent2)','◉'],
     unknown:  ['var(--text3)', '—'],
   };
   return(sources||[]).map(s=>{
     const isErr=!!errMap[s.source];
-    const v=isErr?'error':s.verdict||(s.found?'found':'nodata');
+    const v=isErr?'error':(s.verdict&&s.verdict!=='unknown')?s.verdict:(s.found?'found':'nodata');
     const[color,icon]=cfg[v]||['var(--text3)','—'];
     const label={VirusTotal:'VT',ThreatFox:'TFox',Shodan:'Shodan'}[s.source]||s.source;
     const title=isErr?errMap[s.source]:(v==='nodata'?'Sin datos':v);

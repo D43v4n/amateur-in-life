@@ -33,9 +33,14 @@ function consolidateVerdict(vtData, shData, tfData, abData) {
     else if (maxConf >  0  && (verdict === 'clean' || verdict === 'unknown')) verdict = 'suspect';
   }
 
-  // ── 3. Shodan escala si hay CVEs conocidos ─────────────────
-  if (hasSH && shData.vulns?.length > 0 && (verdict === 'clean' || verdict === 'unknown')) {
-    verdict = 'suspect';
+  // ── 3. Shodan escala solo por tags de malware/botnet ─────────
+  // CVEs indican vulnerabilidad de infraestructura, no actividad maliciosa.
+  // Solo tags como 'malware'/'botnet' son señal de compromiso activo.
+  if (hasSH) {
+    const DANGER_TAGS = new Set(['malware', 'botnet', 'c2', 'compromised']);
+    if (shData.tags?.some(t => DANGER_TAGS.has(t.toLowerCase())) && verdict !== 'malicious') {
+      if (verdict === 'clean' || verdict === 'unknown') verdict = 'suspect';
+    }
   }
 
   // ── 4. AbuseIPDB escala por score de abuso ─────────────────
@@ -113,7 +118,9 @@ router.post('/check', async (req, res) => {
     const sources = [
       vtData ? { source: 'VirusTotal', found: !vtData.error, verdict: vtData.verdict,
         link: `https://www.virustotal.com/gui/ip-address/${ip}` } : null,
-      shData ? { source: 'Shodan', found: !shData.error, verdict: shData.verdict,
+      shData ? { source: 'Shodan',
+        found: !shData.error && !!(shData.ports?.length || shData.vulns?.length || shData.hostnames?.length),
+        verdict: shData.verdict,
         link: `https://www.shodan.io/host/${ip}` } : null,
       tfData ? { source: 'ThreatFox', found: (tfData.matches?.length > 0), verdict: tfData.verdict,
         link: `https://threatfox.abuse.ch/browse.php?search=ioc%3A${ip}` } : null,
