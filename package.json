@@ -2,6 +2,7 @@
   "name": "bluewatch-osint",
   "version": "1.0.0",
   "description": "Blue Team OSINT Intelligence Platform",
+  "license": "NPSL-0.95",
   "main": "server/index.js",
   "scripts": {
     "start": "node server/index.js",

@@ -276,6 +276,14 @@ const PORTS = {
     apps: ['PowerShell Remoting', 'Ansible'],
     posture: 'internal', malware: false, exfil: false,
   },
+  1688: {
+    name: 'KMS (Key Management Service)', proto: ['TCP'], category: 'windows',
+    security: 'warning',
+    description: 'Puerto por defecto del servicio de activación por volumen de Microsoft (KMS) para Windows y Office.',
+    apps: ['Microsoft KMS Host', 'vlmcsd (KMS emulator no oficial)'],
+    warning: 'Nunca debe estar expuesto a internet: solo tráfico interno cliente→servidor KMS. También es reutilizado por herramientas de activación pirata (vlmcsd) y puede usarse como puerto de mimetismo para C2, ya que suele quedar sin monitorear.',
+    posture: 'internal', malware: false, exfil: false,
+  },
 
   // ── Bases de datos ────────────────────────────────────────────
   1433: {

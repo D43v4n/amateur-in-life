@@ -3,7 +3,16 @@ const router  = express.Router();
 const axios   = require('axios');
 const https   = require('https');
 const PORTS   = require('../data/ports');
+const NMAP_SERVICES = require('../data/nmap-services');
 const { isValidPort } = require('../utils/validators');
+
+function getNmapServicesInfo(port) {
+  const entry = NMAP_SERVICES[port];
+  if (!entry) return null;
+  return ['tcp', 'udp']
+    .filter(proto => entry[proto])
+    .map(proto => ({ proto, service: entry[proto].name, frequency: entry[proto].frequency, comment: entry[proto].comment }));
+}
 
 const agent = new https.Agent({ rejectUnauthorized: false });
 
@@ -36,14 +45,21 @@ router.post('/lookup', async (req, res) => {
     const exposure = await getShodanPortCount(num);
 
     if (!info) {
+      const nmapServices = getNmapServicesInfo(num);
+      const bestGuess = nmapServices?.length
+        ? [...new Set(nmapServices.map(s => s.service))].join(' / ')
+        : null;
+
       return {
         port:        num,
         known:       false,
-        name:        'Puerto no registrado',
-        proto:       [],
+        name:        bestGuess || 'Puerto no registrado',
+        proto:       nmapServices?.map(s => s.proto) || [],
         category:    'unknown',
         security:    'info',
-        description: 'Este puerto no tiene asignación estándar conocida. Puede ser una aplicación personalizada, efímero, o potencialmente sospechoso.',
+        description: bestGuess
+          ? `Sin curación de contexto de seguridad Blue Team. Nombre de servicio y frecuencia observada tomados de nmap-services (proyecto Nmap, ver LICENSE). Verificar business justification con el operador del servicio antes de asumir el propósito real.`
+          : 'Este puerto no tiene asignación estándar conocida ni aparece en nmap-services. Puede ser una aplicación personalizada, efímero, o potencialmente sospechoso.',
         apps:        [],
         warning:     null,
         secure_alt:  null,
@@ -51,6 +67,7 @@ router.post('/lookup', async (req, res) => {
         malware:     false,
         exfil:       false,
         note:        null,
+        nmap_services: nmapServices,
         exposure,
         shodan_link: `https://www.shodan.io/search?query=port:${num}`,
       };
@@ -71,6 +88,7 @@ router.post('/lookup', async (req, res) => {
       malware:     info.malware || false,
       exfil:       info.exfil || false,
       note:        info.note || null,
+      nmap_services: null,
       exposure,
       shodan_link: `https://www.shodan.io/search?query=port:${num}`,
     };

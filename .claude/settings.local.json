@@ -8,7 +8,29 @@
       "Bash(curl -sk 'https://api.shodan.io/shodan/host/104.21.90.152?key=Zy9zJiuqzjUx7LGBnGcLdWplbGslZ4We' -w '\\\\nHTTP_STATUS:%{http_code}')",
       "Bash(python -c \"import sys,json; d=sys.stdin.read\\(\\); parts=d.rsplit\\('\\\\n',1\\); print\\(parts[-1]\\); print\\(json.loads\\(parts[0]\\).get\\('error', 'OK - campos: '+str\\(list\\(json.loads\\(parts[0]\\).keys\\(\\)\\)[:5]\\)\\)\\)\")",
       "Bash(curl -s -X POST http://localhost:3000/api/domain/check -H 'Content-Type: application/json' -d '{\"domains\":[\"mptom.info\"]}')",
-      "Bash(python -c ':*)"
+      "Bash(python -c ':*)",
+      "Bash(curl -sL -o /tmp/nmap-services \"https://raw.githubusercontent.com/nmap/nmap/master/nmap-services\")",
+      "Read(//tmp/**)",
+      "Bash(curl -sL \"https://raw.githubusercontent.com/nmap/nmap/master/LICENSE\")",
+      "Bash(grep -v '^#\\\\|^$' /tmp/nmap-services)",
+      "Bash(awk -F'\\\\t' '{split\\($2,a,\"/\"\\); print a[1]}')",
+      "Bash(mkdir -p /c/Users/Z17347/AppData/Local/Temp/claude/c--Users-Z17347-OneDrive---The-Coca-Cola-Company-Documents-Vibe-coding-project-Blue-team-console/82be544a-bc37-4c98-a703-92e663784379/scratchpad)",
+      "Bash(cp /tmp/nmap-services /c/Users/Z17347/AppData/Local/Temp/claude/c--Users-Z17347-OneDrive---The-Coca-Cola-Company-Documents-Vibe-coding-project-Blue-team-console/82be544a-bc37-4c98-a703-92e663784379/scratchpad/nmap-services)",
+      "Read(//c/Users/Z17347/AppData/Local/Temp/claude/c--Users-Z17347-OneDrive---The-Coca-Cola-Company-Documents-Vibe-coding-project-Blue-team-console/82be544a-bc37-4c98-a703-92e663784379/scratchpad/**)",
+      "Bash(node /c/Users/Z17347/AppData/Local/Temp/claude/c--Users-Z17347-OneDrive---The-Coca-Cola-Company-Documents-Vibe-coding-project-Blue-team-console/82be544a-bc37-4c98-a703-92e663784379/scratchpad/parse-nmap-services.js)",
+      "Bash(curl -sL \"https://raw.githubusercontent.com/nmap/nmap/master/LICENSE\" -o /tmp/NPSL-LICENSE.txt)",
+      "Bash(sed -n '260,300p' /tmp/NPSL-LICENSE.txt)",
+      "Read(//c/Users/Z17347/AppData/Local/Temp/**)",
+      "Bash(git config *)",
+      "Bash(cat)",
+      "Bash(cat /tmp/license-header.txt /tmp/NPSL-LICENSE.txt)",
+      "Bash(node -e ' *)",
+      "Bash(curl -s -X POST http://localhost:3999/api/ports/lookup -H \"Content-Type: application/json\" -d '{\"ports\":[1688,9999,443,65432]}')",
+      "Bash(tasklist //FI \"IMAGENAME eq node.exe\")",
+      "Bash(netstat -ano)",
+      "Bash(taskkill //PID 16568 //F)",
+      "PowerShell(Get-ChildItem \"$env:LOCALAPPDATA\\\\Programs\\\\Git\\\\cmd\" -ErrorAction SilentlyContinue | Select Name; Get-ChildItem \"$env:LOCALAPPDATA\\\\Programs\\\\Git\\\\bin\" -ErrorAction SilentlyContinue | Select Name)",
+      "PowerShell($env:Path += \";$env:LOCALAPPDATA\\\\Programs\\\\Git\\\\cmd\"; git status)"
     ]
   }
 }
